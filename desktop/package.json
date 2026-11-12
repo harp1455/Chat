@@ -1,0 +1,13 @@
+{
+  "name": "oneonone-chat",
+  "productName": "1대1채팅",
+  "version": "1.0.0",
+  "description": "1:1 캐릭터 채팅",
+  "main": "main.js",
+  "author": "1대1채팅",
+  "private": true,
+  "devDependencies": {
+    "@electron/packager": "^20.3.0",
+    "electron": "^45.3.1"
+  }
+}

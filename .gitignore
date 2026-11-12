@@ -1,0 +1,18 @@
+node_modules/
+dist/
+desktop/out/
+desktop/app/index.html
+mobile/www/index.html
+
+# 안드로이드 빌드 결과와 서명 키 (절대 올리지 않음)
+mobile/android/app/build/
+mobile/android/build/
+mobile/android/.gradle/
+mobile/android/local.properties
+mobile/android/keystore.properties
+mobile/android/app/src/main/assets/public/
+mobile/android/app/src/main/assets/capacitor.config.json
+mobile/android/app/src/main/assets/capacitor.plugins.json
+mobile/android/capacitor-cordova-android-plugins/build/
+*.jks
+*.keystore

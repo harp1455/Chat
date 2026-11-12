@@ -1,0 +1,9 @@
+{
+  "appId": "kr.oneonone.chat",
+  "appName": "1대1채팅",
+  "webDir": "www",
+  "android": { "adjustMarginsForEdgeToEdge": "force", "backgroundColor": "#161a24" },
+  "plugins": {
+    "BackgroundRunner": { "label": "kr.oneonone.chat.pro", "src": "runners/proactive.js", "event": "checkIn", "repeat": true, "interval": 15, "autoStart": true }
+  }
+}

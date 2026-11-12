@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">1대1채팅</string>
+    <string name="title_activity_main">1대1채팅</string>
+    <string name="package_name">kr.oneonone.chat</string>
+    <string name="custom_url_scheme">kr.oneonone.chat</string>
+</resources>

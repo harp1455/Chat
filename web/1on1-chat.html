@@ -1396,7 +1396,8 @@ async function apiError(res) {
     let j = await res.json(); if (Array.isArray(j)) j = j[0];
     const e = j?.error || {}; msg = e.message || ''; status = e.status || '';
     reason = (e.details || []).map(d => d && d.reason).find(Boolean) || '';
-    const rd = (e.details || []).map(d => d && d.retryDelay).find(Boolean); if (rd) retryMs = Math.ceil(parseFloat(rd) * 1000) || 0;
+    const rd = (e.details || []).map(d => d && d.retryDelay).find(Boolean) || (msg.match(/retry in ([\dhms.]+)/i) || [])[1];
+    if (rd) { let t = 0; for (const [, v, u] of String(rd).matchAll(/([\d.]+)\s*(h|ms|m|s)?/g)) t += parseFloat(v) * ({ h: 3600e3, m: 60e3, ms: 1, s: 1e3 }[u || 's']); retryMs = Math.ceil(t) || 0; }
   } catch { }
   const c = res.status; let tip, kind = 'http';
   if (reason === 'API_KEY_INVALID' || /API key not valid|API_KEY_INVALID/i.test(msg)) { kind = 'key'; tip = 'API 키가 올바르지 않습니다. AI Studio의 API 키 화면에서 키를 다시 복사해 붙여넣으세요.'; }
@@ -1405,6 +1406,8 @@ async function apiError(res) {
   else if (reason === 'API_KEY_SERVICE_BLOCKED' || /Requests to this API .* are blocked/i.test(msg)) { kind = 'key'; tip = '이 키에 ‘API 제한’이 걸려 있어서 Gemini API를 부를 수 없습니다. 구글 클라우드 콘솔에서 이 키의 API 제한에 Generative Language API를 추가하거나, AI Studio에서 새 키를 만드세요.'; }
   else if (reason === 'SERVICE_DISABLED' || /has not been used in project|is disabled/i.test(msg)) { kind = 'key'; tip = '이 키가 속한 구글 프로젝트에서 Gemini API(Generative Language API)가 꺼져 있습니다. AI Studio에서 만든 키를 쓰거나, 클라우드 콘솔에서 이 API를 사용 설정하세요.'; }
   else if (c === 402 || /prepayment credits? (are|is) depleted|credit balance/i.test(msg)) { kind = 'billing'; tip = '구글이 선불 잔액을 0으로 보고 요청을 막았습니다. AI Studio 결제 화면에서 잔액을 확인하세요. 잔액이 남아 있는데도 이 메시지가 나오면 구글 쪽 잔액 동기화 문제일 수 있습니다(개발자 포럼에 같은 사례가 많습니다). 잠시 뒤 다시 시도해 보세요.'; }
+  else if (c === 429 && /free_tier/i.test(msg) && /limit:\s*0\b/.test(msg)) { kind = 'tier'; tip = '구글이 이 키를 ‘무료 등급’으로 처리하고 있습니다. 이 모델은 무료 등급 한도가 0이라 쓸 수 없습니다. 잔액이 있어도 생깁니다.\n· AI Studio의 ‘API 키’ 화면에서 이 키의 결제 등급(Tier)이 ‘무료’로 나오면, 결제가 연결된 프로젝트에서 만든 키로 바꿔 넣으세요.\n· 결제 등급이 ‘유료’로 나오는데도 이러면, 결제를 연결하기 전에 만든 키일 수 있습니다. 같은 프로젝트에서 키를 새로 만들어 넣어 보세요.\n· 새 키로도 같으면 구글 쪽 등급 반영 오류입니다(개발자 포럼에 같은 사례가 많습니다). 몇 시간 뒤 다시 시도하거나 AI Studio에 문의하세요.'; }
+  else if (c === 429 && /per day/i.test(msg) && !/per minute/i.test(msg)) { kind = 'daily'; tip = '오늘 쓸 수 있는 사용 한도를 다 썼습니다. 한도가 초기화될 때까지 기다리거나, AI Studio에서 등급(Tier)을 확인하세요.'; }
   else if (c === 429) { kind = 'quota'; tip = '요청이 짧은 시간에 몰려 구글이 잠시 막았습니다(분당 사용 한도). 잔액 문제가 아니니 잠시 뒤 다시 시도하세요.'; }
   else if ((c === 403 || c === 400) && /billing|payment|free tier|denied access/i.test(msg)) { kind = 'billing'; tip = '결제 설정 문제로 막혔습니다. AI Studio에서 이 키의 프로젝트에 결제 계정이 연결되어 있는지 확인하세요.'; }
   else if (c === 404) { kind = 'model'; tip = '모델을 찾을 수 없습니다. 모델 이름이 틀렸거나, 내 키로는 아직 쓸 수 없는 모델입니다.'; }
@@ -1429,7 +1432,7 @@ async function withRetry(fn, { signal, onWait, tries = 3 } = {}) {
   for (let i = 1; ; i++) {
     try { return await fn(); }
     catch (e) {
-      if (e.name === 'AbortError' || i >= tries || !(e.kind === 'quota' || e.kind === 'server')) throw e;
+      if (e.name === 'AbortError' || i >= tries || !(e.kind === 'quota' || e.kind === 'server') || (e.retryMs || 0) > 60000) throw e;
       const ms = Math.min(30000, Math.max(e.retryMs || 0, 2500 * i * i));
       onWait?.(Math.ceil(ms / 1000), e);
       await waitMs(ms, signal);
@@ -3266,7 +3269,7 @@ $('#btnWidgetNew').onclick = async () => {
 };
 
 /* ───────── 업데이트 확인 (GitHub Releases) ───────── */
-const APP_VERSION = '1.3.0';
+const APP_VERSION = '1.3.1';
 const UPDATE_BASE = 'https://raw.githubusercontent.com/harp1455/Chat/main/release/';
 const RELEASES_PAGE = 'https://github.com/harp1455/Chat/releases';
 const verCmp = (a, b) => { const x = String(a).replace(/^v/, '').split('.').map(n => parseInt(n, 10) || 0), y = String(b).replace(/^v/, '').split('.').map(n => parseInt(n, 10) || 0); for (let i = 0; i < 3; i++) if ((x[i] || 0) !== (y[i] || 0)) return (x[i] || 0) - (y[i] || 0); return 0; };

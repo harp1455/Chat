@@ -33,7 +33,7 @@ const icon = name => nativeImage.createFromPath(path.join(ROOT, name));
 
 /* ───── 화면 업데이트 ─────
    새 버전의 화면(index.html)을 받아 사용자 폴더에 저장해 두고, 앱에 들어 있는 것보다 새것이면 그걸 쓴다.
-   앱 껍데기(main.js·preload.js)가 바뀐 버전은 update.json의 minShell로 알려 주고, 그때는 새 압축 파일이 필요하다. */
+   앱 껍데기(main.js·preload.js)가 바뀐 버전은 latest.json의 minShell로 알려 주고, 그때는 새 압축 파일이 필요하다. */
 const verCmp = (a, b) => { const x = String(a).replace(/^v/, '').split('.').map(n => parseInt(n, 10) || 0), y = String(b).replace(/^v/, '').split('.').map(n => parseInt(n, 10) || 0); for (let i = 0; i < 3; i++) if ((x[i] || 0) !== (y[i] || 0)) return (x[i] || 0) - (y[i] || 0); return 0; };
 const uiDir = () => path.join(app.getPath('userData'), 'ui');
 function uiOverride() {
@@ -43,12 +43,9 @@ function uiOverride() {
   } catch { }
   return null;
 }
-async function applyUpdate({ version, htmlUrl, metaUrl }) {
-  if (!/^https:\/\/github\.com\/harp1455\/chat\/releases\/download\//i.test(String(htmlUrl))) return { ok: false, error: '업데이트 주소가 올바르지 않습니다.' };
-  if (metaUrl) {
-    try { const meta = await (await net.fetch(metaUrl)).json(); if (meta?.minShell && verCmp(meta.minShell, app.getVersion()) > 0) return { ok: false, needFull: true }; }
-    catch { return { ok: false, error: '업데이트 정보를 읽지 못했습니다.' }; }
-  }
+async function applyUpdate({ version, htmlUrl, minShell }) {
+  if (!/^https:\/\/raw\.githubusercontent\.com\/harp1455\/chat\/main\/release\//i.test(String(htmlUrl))) return { ok: false, error: '업데이트 주소가 올바르지 않습니다.' };
+  if (minShell && verCmp(minShell, app.getVersion()) > 0) return { ok: false, needFull: true };
   const res = await net.fetch(htmlUrl); if (!res.ok) return { ok: false, error: '내려받지 못했습니다 (' + res.status + ')' };
   const html = await res.text();
   if (!html.includes('<title>1:1 채팅</title>') || !html.includes("const APP_VERSION = '" + version + "'")) return { ok: false, error: '받은 파일이 이 앱의 화면 파일이 아닙니다.' };

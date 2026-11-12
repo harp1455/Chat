@@ -15,7 +15,7 @@ contextBridge.exposeInMainWorld('desktop', {
   scaleWidget: s => ipcRenderer.send('widget-scale', Number(s) || 1),
   getAutostart: () => ipcRenderer.invoke('get-autostart'),
   setAutostart: on => ipcRenderer.invoke('set-autostart', !!on),
-  applyUpdate: o => ipcRenderer.invoke('apply-update', { version: String(o?.version || ''), htmlUrl: String(o?.htmlUrl || ''), metaUrl: o?.metaUrl ? String(o.metaUrl) : null }),
+  applyUpdate: o => ipcRenderer.invoke('apply-update', { version: String(o?.version || ''), htmlUrl: String(o?.htmlUrl || ''), minShell: String(o?.minShell || '') }),
   shellVersion: () => ipcRenderer.invoke('shell-version'),
   onOpenRoom: cb => ipcRenderer.on('open-room', (_, id) => cb(id)),
   onResume: cb => ipcRenderer.on('resumed', () => cb()),

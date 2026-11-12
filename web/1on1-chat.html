@@ -2419,29 +2419,31 @@ $('#btnWidgetNew').onclick = async () => {
 
 /* ───────── 업데이트 확인 (GitHub Releases) ───────── */
 const APP_VERSION = '1.0.0';
-const UPDATE_REPO = 'harp1455/Chat';
+const UPDATE_BASE = 'https://raw.githubusercontent.com/harp1455/Chat/main/release/';
+const RELEASES_PAGE = 'https://github.com/harp1455/Chat/releases';
 const verCmp = (a, b) => { const x = String(a).replace(/^v/, '').split('.').map(n => parseInt(n, 10) || 0), y = String(b).replace(/^v/, '').split('.').map(n => parseInt(n, 10) || 0); for (let i = 0; i < 3; i++) if ((x[i] || 0) !== (y[i] || 0)) return (x[i] || 0) - (y[i] || 0); return 0; };
 const platformName = () => DESK ? '윈도우 앱' : CAPN ? '안드로이드 앱' : '브라우저(HTML 파일)';
+// 저장소의 release/latest.json: { version, date, notes, minShell, html, apk, windowsZip }
 async function checkUpdate(manual) {
   if (WIDGET) return;
   const msg = t => { if (manual) $('#updMsg').textContent = t; };
   msg('확인하는 중…');
   try {
-    const res = await fetch(`https://api.github.com/repos/${UPDATE_REPO}/releases/latest`, { headers: { Accept: 'application/vnd.github+json' }, cache: 'no-store' });
+    const res = await fetch(UPDATE_BASE + 'latest.json?t=' + Date.now(), { cache: 'no-store' });
     if (res.status === 404) { msg('아직 올라온 버전이 없습니다.'); return; }
-    if (!res.ok) throw new Error('GitHub 응답 ' + res.status);
-    const rel = await res.json(), latest = String(rel.tag_name || '').replace(/^v/, '');
+    if (!res.ok) throw new Error('응답 ' + res.status);
+    const info = await res.json(), latest = String(info.version || '').replace(/^v/, '');
     if (!latest || verCmp(latest, APP_VERSION) <= 0) { msg(`최신 버전입니다 (v${APP_VERSION}).`); return; }
     if (!manual && S.settings.skipVersion === latest) return;
     msg(`새 버전 v${latest}이 있습니다.`);
-    showUpdate(rel, latest);
+    showUpdate(info, latest);
   } catch (e) { msg('확인하지 못했습니다. ' + (e.message || e)); console.warn('업데이트 확인 실패', e); }
 }
-function showUpdate(rel, latest) {
-  const asset = re => (rel.assets || []).find(a => re.test(a.name));
-  const html = asset(/\.html$/i), apk = asset(/\.apk$/i), zip = asset(/windows.*\.zip$/i), meta = asset(/^update\.json$/i);
+const fileUrl = f => !f ? null : /^https:\/\//.test(f) ? f : UPDATE_BASE + f.split('/').map(encodeURIComponent).join('/');
+function showUpdate(info, latest) {
+  const html = fileUrl(info.html), apk = fileUrl(info.apk), zip = fileUrl(info.windowsZip) || RELEASES_PAGE;
   $('#updTitle').textContent = `새 버전 v${latest}`;
-  $('#updNotes').textContent = (rel.body || '변경 내용이 적혀 있지 않습니다.').trim();
+  $('#updNotes').textContent = (info.notes || '변경 내용이 적혀 있지 않습니다.').trim();
   $('#updState').textContent = '';
   const btns = $('#updBtns'); btns.textContent = '';
   const open = url => { if (CAPN) location.href = url; else window.open(url, '_blank', 'noopener'); };
@@ -2450,21 +2452,25 @@ function showUpdate(rel, latest) {
   if (DESK) {
     $('#updHow').textContent = '‘지금 업데이트’를 누르면 새 화면을 받아 바로 적용합니다. 대화와 설정은 그대로 남습니다. 앱 자체(트레이·위젯 동작)가 바뀐 버전이면 새 압축 파일을 받으라고 안내합니다.';
     btns.append(h('button', { class: 'main', onclick: async e => {
-      if (!html || !DESK.applyUpdate) { open(zip?.browser_download_url || rel.html_url); return; }
+      if (!html || !DESK.applyUpdate) { open(zip); return; }
       e.target.disabled = true; $('#updState').textContent = '새 버전을 받는 중…';
       try {
-        const r = await DESK.applyUpdate({ version: latest, htmlUrl: html.browser_download_url, metaUrl: meta?.browser_download_url || null });
+        const r = await DESK.applyUpdate({ version: latest, htmlUrl: html, minShell: info.minShell || '' });
         if (r?.ok) $('#updState').textContent = '적용했습니다. 잠시 뒤 화면이 새로 열립니다.';
-        else if (r?.needFull) { $('#updState').textContent = '이번 버전은 앱 전체를 바꿔야 합니다. 새 압축 파일을 내려받아, 앱을 종료한 뒤 기존 폴더에 덮어쓰세요.'; open(zip?.browser_download_url || rel.html_url); }
+        else if (r?.needFull) { $('#updState').textContent = '이번 버전은 앱 전체를 바꿔야 합니다. 새 압축 파일을 내려받아, 앱을 종료한 뒤 기존 폴더에 덮어쓰세요.'; open(zip); }
         else { $('#updState').textContent = '적용하지 못했습니다. ' + (r?.error || ''); e.target.disabled = false; }
       } catch (err) { $('#updState').textContent = '적용하지 못했습니다. ' + (err.message || err); e.target.disabled = false; }
-    } }, '지금 업데이트'), h('button', { onclick: () => open(zip?.browser_download_url || rel.html_url) }, '압축 파일 내려받기'), later, skip);
+    } }, '지금 업데이트'), later, skip);
   } else if (CAPN) {
     $('#updHow').textContent = '‘APK 내려받기’를 누르면 브라우저에서 새 설치 파일을 받습니다. 받은 파일을 열어 설치하면 기존 앱 위에 덮어써지고 대화는 그대로 남습니다. 처음이면 ‘출처를 알 수 없는 앱 설치’를 허용해야 할 수 있습니다.';
-    btns.append(h('button', { class: 'main', onclick: () => open(apk?.browser_download_url || rel.html_url) }, 'APK 내려받기'), later, skip);
+    btns.append(h('button', { class: 'main', onclick: () => open(apk || RELEASES_PAGE) }, 'APK 내려받기'), later, skip);
   } else {
     $('#updHow').textContent = '새 HTML 파일을 내려받아 지금 쓰는 파일에 덮어쓰고(같은 이름, 같은 위치), 같은 브라우저로 다시 여세요. 대화와 설정은 브라우저에 저장돼 있어 그대로 남습니다.';
-    btns.append(h('button', { class: 'main', onclick: () => open(html?.browser_download_url || rel.html_url) }, 'HTML 파일 내려받기'), later, skip);
+    btns.append(h('button', { class: 'main', onclick: async e => {
+      e.target.disabled = true;
+      try { const r = await fetch(html, { cache: 'no-store' }); if (!r.ok) throw new Error(r.status); download(new Blob([await r.text()], { type: 'text/html' }), '1대1채팅.html'); $('#updState').textContent = '내려받았습니다. 쓰던 파일에 덮어쓰고 다시 여세요.'; }
+      catch (err) { open(html); } finally { e.target.disabled = false; }
+    } }, 'HTML 파일 내려받기'), later, skip);
   }
   if (!$('#dlgUpdate').open) $('#dlgUpdate').showModal();
 }

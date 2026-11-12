@@ -85,7 +85,7 @@ addEventListener('checkIn', async function (resolve, reject) {
       last.parts[0].text = last.parts[0].text.replace('\n(시스템: {{NOTE}})', '').replace('(시스템: {{NOTE}})', '') || '(시스템: 대화 시작)';
       p.contents.push({ role: 'model', parts: [{ text: text }] }, { role: 'user', parts: [{ text: '(시스템: 상대에게서 아직 새 메시지가 없다.)\n(시스템: {{NOTE}})' }] });
       p.streak = (p.streak || 0) + 1; p.lastTs = Date.now();
-      CapacitorNotifications.schedule([{ id: Math.floor(Math.random() * 2000000000), title: p.name, body: plainBody(text), smallIcon: 'ic_stat_chat', autoCancel: true }]);
+      CapacitorNotifications.schedule([{ id: Math.floor(Math.random() * 2000000000), title: p.name, body: plainBody(text), smallIcon: 'ic_stat_chat', autoCancel: true, channelId: 'chat_msg', actionTypeId: 'room:' + p.roomId }]);
       break; // 한 번 깨어날 때 하나만
     }
     save('cfg', cfg); save('inbox', inbox);

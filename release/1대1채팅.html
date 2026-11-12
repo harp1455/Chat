@@ -209,26 +209,41 @@ details>summary{cursor:pointer;color:var(--dim);font-size:13.5px}
 .story>:last-child{margin-bottom:0}
 .story .act{color:#aab1c6;font-style:italic}
 .story strong{color:#fff}
-.story .sh{font-weight:700;margin:.4em 0 .5em}
+.story .sh{font-weight:700;margin:.5em 0 .45em;line-height:1.4}
+.story .sh.h1{font-size:1.45em}.story .sh.h2{font-size:1.28em}.story .sh.h3{font-size:1.14em}.story .sh.h4{font-size:1.04em}.story .sh.h5,.story .sh.h6{font-size:.95em;color:var(--dim)}
+.story ul,.story ol{margin:0 0 .85em;padding-left:1.4em}
+.story li{margin:.15em 0}
+.story li>ul,.story li>ol{margin:.15em 0 0}
+.story a{color:var(--char);text-underline-offset:3px}
+.story em{font-style:italic}
+.story u,.story ins{text-underline-offset:3px}
+.story mark{background:rgba(255,226,120,.28);color:inherit;border-radius:3px;padding:0 2px}
+.story .big{font-size:1.2em}
+.story small{font-size:.82em;color:var(--dim)}
+.story .tbl{overflow-x:auto;margin:0 0 .85em}
+.story table{border-collapse:collapse;font:14px/1.55 var(--sans);min-width:60%}
+.story th,.story td{border:1px solid var(--line);padding:6px 10px;text-align:left;vertical-align:top}
+.story th{background:rgba(255,255,255,.05);font-weight:600}
+.story blockquote blockquote{margin:.3em 0 0}
 .story hr{border:0;border-top:1px solid var(--line);margin:1em 0}
 .story blockquote{margin:0 0 .85em;padding:2px 0 2px 12px;border-left:3px solid var(--char);color:#c9cede}
 .story pre.hud{font:13px/1.6 ui-monospace,Consolas,monospace;background:rgba(15,18,26,.85);border:1px solid var(--line);border-radius:10px;padding:10px 12px;white-space:pre-wrap;margin:0 0 .85em}
 .story code{background:rgba(255,255,255,.1)}
 .mdimg{max-width:100%;max-height:420px;border-radius:10px;display:block;margin:4px 0}
-#main.story #spriteWrap{bottom:50%}
+#main.storymode #spriteWrap{bottom:50%}
 /* 스토리챗 이미지 모드: 본문 사이에 넣기 / 끄기 → 위쪽 고정 그림을 치우고 본문을 넓게 */
 #main.img-flat #spriteWrap,#main.img-flat #spot,#main.img-flat #placeholder{display:none}
 #main.img-flat #bg{opacity:.18}
-#main.story.img-flat #chat{height:calc(100% - 56px);background:linear-gradient(to top,rgba(22,26,36,.97) 0%,rgba(22,26,36,.93) 90%,rgba(22,26,36,0) 100%)}
-#main.story.img-flat #log{-webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 6%);mask-image:linear-gradient(to bottom,transparent 0,#000 6%)}
+#main.storymode.img-flat #chat{height:calc(100% - 56px);background:linear-gradient(to top,rgba(22,26,36,.97) 0%,rgba(22,26,36,.93) 90%,rgba(22,26,36,0) 100%)}
+#main.storymode.img-flat #log{-webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 6%);mask-image:linear-gradient(to bottom,transparent 0,#000 6%)}
 .story figure.sc{margin:.3em 0 1.1em;display:flex;flex-direction:column;align-items:center;gap:4px}
 .story figure.sc img,.story figure.sc video{max-width:min(100%,520px);max-height:min(52vh,560px);border-radius:12px;display:block;box-shadow:0 6px 28px rgba(0,0,0,.35)}
 .story figure.sc figcaption{font:12px var(--sans);color:var(--dim)}
 .agroup{display:flex;flex-direction:column;gap:8px}
 .agroup h4{margin:6px 0 0;font-size:14px}
-#main.story #chat{height:62%;background:linear-gradient(to top,rgba(22,26,36,.98) 0%,rgba(22,26,36,.94) 66%,rgba(22,26,36,.5) 88%,rgba(22,26,36,0) 100%)}
-#main.story #chat>*{width:min(820px,100%)}
-#main.story #log{-webkit-mask-image:linear-gradient(to bottom,transparent 0,rgba(0,0,0,.5) 10%,#000 20%);mask-image:linear-gradient(to bottom,transparent 0,rgba(0,0,0,.5) 10%,#000 20%)}
+#main.storymode #chat{height:62%;background:linear-gradient(to top,rgba(22,26,36,.98) 0%,rgba(22,26,36,.94) 66%,rgba(22,26,36,.5) 88%,rgba(22,26,36,0) 100%)}
+#main.storymode #chat>*{width:min(820px,100%)}
+#main.storymode #log{-webkit-mask-image:linear-gradient(to bottom,transparent 0,rgba(0,0,0,.5) 10%,#000 20%);mask-image:linear-gradient(to bottom,transparent 0,rgba(0,0,0,.5) 10%,#000 20%)}
 .cnt{font-size:12px;color:var(--dim);align-self:flex-end}
 .btnlink{display:inline-block;border:1px solid var(--line);background:var(--panel2);border-radius:9px;padding:7px 13px;color:var(--ink);text-decoration:none}
 .btnlink:hover{border-color:#566080}
@@ -283,6 +298,15 @@ ol.diag{list-style:none;margin:12px 0 0;padding:0;display:flex;flex-direction:co
 .dg.fail .dd{color:#ffd9de}
 .dg .rowx{margin-top:6px}
 .dg .rowx button{font-size:12.5px;padding:4px 10px}
+.lockNote{background:rgba(255,226,120,.08);border:1px solid rgba(255,226,120,.25);border-radius:10px;padding:10px 12px;font-size:13.5px;color:#e9dca8}
+dialog.small{width:min(460px,96vw)}
+.permbox{display:flex;flex-direction:column;gap:6px;background:#141822;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:13.5px}
+.permbox .rowx{justify-content:space-between;align-items:center}
+button.small{padding:5px 12px;font-size:13px}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:60;display:flex;justify-content:center;padding:0 12px calc(12px + env(safe-area-inset-bottom));pointer-events:none}
+.sheet-in{pointer-events:auto;width:min(480px,100%);background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:18px 18px 14px;box-shadow:0 18px 50px rgba(0,0,0,.45);display:flex;flex-direction:column;gap:8px;transform:translateY(120%);transition:transform .32s cubic-bezier(.2,.8,.2,1)}
+.sheet.show .sheet-in{transform:none}
+.sheet p{margin:0;color:var(--dim);font-size:14px;line-height:1.55}
 #toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);background:#0f121a;border:1px solid var(--line);border-radius:12px;padding:10px 16px;font-size:13.5px;z-index:50;max-width:min(560px,90vw)}
 
 @media (hover:none){
@@ -313,8 +337,40 @@ ol.diag{list-style:none;margin:12px 0 0;padding:0;display:flex;flex-direction:co
   #roomTitle{display:none}
   .grid2{grid-template-columns:1fr}
 }
+/* 부드러운 움직임: 짧고 가볍게, 사용자가 한 일에 반응하는 곳에만 */
+:root{--ease:cubic-bezier(.22,.8,.24,1)}
+button,.crow,.rrow>button.rt,input,select,textarea{transition:background-color .16s ease,border-color .16s ease,color .16s ease,box-shadow .16s ease,transform .12s ease}
+button:active:not(:disabled){transform:scale(.97)}
+input:focus,select:focus,textarea:focus{border-color:#6b7699;outline:none;box-shadow:0 0 0 3px rgba(240,213,106,.12)}
+body{transition:grid-template-columns .28s var(--ease)}
+.g.enter{animation:rise .32s var(--ease) both}
+.bubble.new{animation:rise .3s var(--ease) both}
+.typing{animation:fadein .25s ease both}
+@keyframes rise{from{opacity:0;transform:translateY(10px)}}
+@keyframes fadein{from{opacity:0}}
+#log.switch{animation:fadein .26s ease both}
+dialog[open]{animation:dlgin .24s var(--ease)}
+dialog[open]::backdrop{animation:fadein .22s ease}
+@keyframes dlgin{from{opacity:0;transform:translateY(12px) scale(.985)}}
+#moreMenu:not([hidden]){animation:menuin .18s var(--ease);transform-origin:top right}
+@keyframes menuin{from{opacity:0;transform:scale(.95) translateY(-4px)}}
+#toast:not([hidden]){animation:toastin .28s var(--ease)}
+@keyframes toastin{from{opacity:0;transform:translate(-50%,12px)}}
+.acts:not([hidden]){animation:fadein .16s ease}
+[data-pane]:not([hidden]){animation:fadein .2s ease}
+.stabs button,.dtabs button{transition:background-color .2s ease,color .2s ease,border-color .2s ease}
+#scrim{display:none}
+@media (max-width:880px){
+  #side{display:flex!important;transform:none;transition:transform .3s var(--ease),visibility 0s}
+  body.side-closed #side{transform:translateX(-104%);visibility:hidden;transition:transform .26s var(--ease),visibility 0s .26s}
+  #scrim{display:block;position:fixed;inset:0;z-index:19;background:rgba(8,10,16,.5);opacity:1;transition:opacity .26s ease}
+  body.side-closed #scrim{opacity:0;pointer-events:none}
+  dialog[open]{animation:sheetin .3s var(--ease)}
+  @keyframes sheetin{from{transform:translateY(24px);opacity:.4}}
+}
 @media (prefers-reduced-motion:reduce){
-  #breath,.fx-nod,.fx-bounce,.fx-shake,.fx-jump,.fx-droop,.fx-sway,.bubble.new,.typing i{animation:none}
+  #breath,.fx-nod,.fx-bounce,.fx-shake,.fx-jump,.fx-droop,.fx-sway,.typing i{animation:none}
+  *,*::before,*::after,dialog[open]::backdrop{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
   .media{transition:none}
   #log{scroll-behavior:auto}
 }
@@ -322,6 +378,7 @@ ol.diag{list-style:none;margin:12px 0 0;padding:0;display:flex;flex-direction:co
 </head>
 <body>
 
+<div id="scrim" aria-hidden="true"></div>
 <aside id="side">
   <h1>1:1 채팅</h1>
   <div class="stabs" role="tablist" aria-label="목록 종류"><button role="tab" data-stab="char">캐릭터</button><button role="tab" data-stab="story">스토리챗</button></div>
@@ -394,9 +451,12 @@ ol.diag{list-style:none;margin:12px 0 0;padding:0;display:flex;flex-direction:co
         <label class="f"><span><b>테마색</b></span><input type="color" data-char="color"></label>
       </div>
     </div>
+    <div class="lockNote" hidden>🔒 제작자가 잠근 캐릭터입니다. 설정·지침·KB는 볼 수 없지만 대화에는 그대로 쓰입니다.</div>
+    <div class="lockHide">
     <label class="f"><span><b>캐릭터 설정</b> 성격, 과거, 말투, 관계 등</span><textarea data-char="persona" rows="9"></textarea></label>
     <label class="f"><span><b>추가 지침</b> 꼭 지켜야 할 규칙이 있으면 적으세요 (선택)</span><textarea data-char="instructions" rows="4"></textarea></label>
     <p class="hint" id="charTotal"></p>
+    </div>
     <div class="grid2">
       <label class="f"><span><b>내 이름</b> 캐릭터가 부를 이름</span><input type="text" data-char="userName"></label>
       <label class="f"><span><b>나에 대한 설정</b> (선택)</span><textarea data-char="userPersona" rows="2"></textarea></label>
@@ -454,11 +514,32 @@ ol.diag{list-style:none;margin:12px 0 0;padding:0;display:flex;flex-direction:co
     <h3>내보내기와 삭제</h3>
     <div class="rowx">
       <button id="btnCharExport">이 캐릭터 내보내기</button>
+      <button id="btnCharExportLock">잠금 파일로 내보내기</button>
       <button class="danger" id="btnCharDelete">캐릭터 삭제</button>
     </div>
-    <p class="hint">내보낸 파일에는 설정과 모습이 들어 있고 대화 기록과 API 키는 들어 있지 않습니다. 받은 사람은 설정 화면의 ‘캐릭터 가져오기’로 불러옵니다.</p>
+    <p class="hint" id="exportHint">내보낸 파일에는 설정과 모습이 들어 있고 대화 기록과 API 키는 들어 있지 않습니다. 받은 사람은 설정 화면의 ‘캐릭터 가져오기’로 불러옵니다.<br><b>잠금 파일</b>은 암호화되어 있어, 받은 사람이 대화는 할 수 있지만 설정·지침·KB 내용은 볼 수 없습니다. 원하면 비밀번호도 걸 수 있습니다.</p>
     </div>
     <div id="charHome"></div>
+  </div>
+</dialog>
+
+<!-- 알림 허용 안내 (안드로이드) -->
+<div id="notifCard" class="sheet" hidden role="dialog" aria-labelledby="notifTitle">
+  <div class="sheet-in">
+    <b id="notifTitle">선톡을 알림으로 받아 보세요</b>
+    <p id="notifText">알림을 허용하면 앱을 닫아 두어도 캐릭터의 메시지가 카톡처럼 도착합니다.</p>
+    <div class="rowx"><button class="main" id="btnNotifYes">알림 허용</button><button class="quiet" id="btnNotifLater">나중에</button></div>
+  </div>
+</div>
+
+<!-- 잠금 내보내기 -->
+<dialog id="dlgLock" class="small">
+  <div class="dh"><h2>잠금 파일로 내보내기</h2><button class="quiet" data-close>닫기</button></div>
+  <div class="db">
+    <p class="hint">받은 사람은 이 캐릭터와 대화할 수 있지만 설정·지침·KB·인물 설정은 볼 수도, 고칠 수도 없습니다. 이름, 그림, 플레이어 설정, 첫 인사, 목소리는 바꿀 수 있습니다.</p>
+    <label class="f"><span><b>비밀번호</b> (선택) 걸어 두면 비밀번호를 아는 사람만 가져올 수 있습니다</span><input type="text" id="lockPw" autocomplete="off" placeholder="비워 두면 비밀번호 없음"></label>
+    <p class="hint">대화할 때 설정은 받은 사람의 기기에서 구글 서버로 보내지므로, 기술을 아는 사람이 작정하고 들여다보는 것까지 막지는 못합니다. 그냥 열어 보거나 복사해 가는 것을 막는 용도입니다.</p>
+    <div class="rowx"><button class="main" id="btnLockGo">내보내기</button></div>
   </div>
 </dialog>
 
@@ -468,11 +549,13 @@ ol.diag{list-style:none;margin:12px 0 0;padding:0;display:flex;flex-direction:co
   <div class="dtabs" role="tablist">
     <button role="tab" data-dtab="base">기본 정보</button>
     <button role="tab" data-dtab="prompt">프롬프트 지시</button>
+    <button role="tab" data-dtab="main" hidden>메인 프롬프트</button>
     <button role="tab" data-dtab="kb">지식 (KB)</button>
     <button role="tab" data-dtab="img">이미지</button>
   </div>
   <div class="db">
     <div data-pane="base" class="sec">
+      <div class="lockNote" hidden>🔒 제작자가 잠근 스토리챗입니다. 프롬프트·KB·인물 설정은 볼 수 없지만 대화에는 그대로 쓰입니다.</div>
       <p class="hint">입력한 내용은 바로 저장됩니다.</p>
       <div class="grid2">
         <label class="f"><span><b>제목</b> 목록에 보이는 이름</span><input type="text" data-char="name"></label>
@@ -490,6 +573,11 @@ ol.diag{list-style:none;margin:12px 0 0;padding:0;display:flex;flex-direction:co
         <label class="f"><span><b>플레이어 이름</b> {{user}} 자리에 들어갑니다</span><input type="text" data-char="userName"></label>
         <label class="f"><span><b>플레이어 설정</b> (선택)</span><textarea data-char="userPersona" rows="2"></textarea></label>
       </div>
+      <label class="f lockHide"><span><b>프롬프트 입력 방식</b> 바꿔도 다른 방식으로 써 둔 내용은 지워지지 않습니다.</span>
+        <select data-char="promptStyle">
+          <option value="split">항목별로 나눠 쓰기 (문체·지문·장르·금지·인물·기타)</option>
+          <option value="whole">메인 프롬프트 한 칸에 통째로 넣기 (크랙 방식)</option>
+        </select></label>
       <label class="f"><span><b>시작상황</b> 새 방을 만들면 첫 응답으로 들어가는 글. 이어서 쓸 수 있는 첫 장면입니다. 비우면 내가 먼저 시작합니다.</span><textarea data-char="greeting" rows="6"></textarea></label>
       <div id="storyExport"></div>
     </div>
@@ -519,6 +607,13 @@ ol.diag{list-style:none;margin:12px 0 0;padding:0;display:flex;flex-direction:co
       <p class="hint" id="storyTotal"></p>
     </div>
 
+    <div data-pane="main" class="sec" hidden>
+      <p class="hint">크랙의 메인 프롬프트를 그대로 붙여 넣으세요. 이 칸 전체가 메인 프롬프트가 되고, KB는 그 아래에 들어갑니다. <b>{{char}}</b>·<b>🄲</b>는 제목, <b>{{user}}</b>·<b>🅄</b>는 플레이어 이름으로 바뀝니다.</p>
+      <label class="f"><span><b>대사 형식</b> 비워 두면 메인 프롬프트에 적힌 형식을 따르고, 없으면 <b>**캐릭터** | "대사"</b></span><input type="text" data-char="dialogFmt" placeholder='메인 프롬프트를 따름'></label>
+      <textarea data-char="sMain" rows="22" placeholder="메인 프롬프트 전체"></textarea>
+      <p class="hint">인물 그림은 ‘이미지’ 탭에 <b>이름_상황.png</b> 형식의 파일 이름으로 올리면 이름별로 나뉩니다.</p>
+      <p class="hint" id="storyTotal2"></p>
+    </div>
     <div data-pane="kb" class="sec" hidden><div id="storyKb"></div></div>
     <div data-pane="img" class="sec" hidden><div id="storyImgs"></div></div>
   </div>
@@ -592,6 +687,10 @@ ol.diag{list-style:none;margin:12px 0 0;padding:0;display:flex;flex-direction:co
       <label class="f"><span><b>조용한 시간 끝</b> (시, 0~23)</span><input type="number" min="0" max="23" data-set="quietTo"></label>
     </div>
     <p class="hint" id="proHint"></p>
+    <div class="permbox" id="permBox" hidden>
+      <div class="rowx"><span id="permNotif"></span><button id="btnPermNotif" class="small"></button></div>
+      <div class="rowx" id="permBatRow"><span id="permBat"></span><button id="btnPermBat" class="small">제외하기</button></div>
+    </div>
     <label class="c" id="autostartRow" hidden><input type="checkbox" id="autostart"> 컴퓨터를 켜면 자동으로 실행 (창 없이 트레이에서 시작)</label>
     <div class="rowx"><button id="btnProTest">지금 선톡 받아 보기</button><span class="hint" id="proMsg"></span></div>
 
@@ -623,7 +722,7 @@ ol.diag{list-style:none;margin:12px 0 0;padding:0;display:flex;flex-direction:co
     <div class="rowx">
       <button id="btnRestore">백업 불러오기</button>
       <button id="btnCharImport">캐릭터 가져오기</button>
-      <input type="file" id="importFile" accept=".json,application/json" hidden>
+      <input type="file" id="importFile" accept=".json,application/json,*/*" hidden>
     </div>
     <p class="hint" id="storeMsg"></p>
   </div>
@@ -806,6 +905,7 @@ async function download(blob, name) {
   const a = h('a', { href: URL.createObjectURL(blob), download: name }); document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
 }
 function blobToB64(blob) { return new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(String(r.result).slice(String(r.result).indexOf(',') + 1)); r.onerror = () => rej(r.error); r.readAsDataURL(blob); }); }
+function bytesToB64(u) { let s = ''; for (let i = 0; i < u.length; i += 0x8000) s += String.fromCharCode.apply(null, u.subarray(i, i + 0x8000)); return btoa(s); }
 function b64ToBytes(b64) { const bin = atob(b64); const u = new Uint8Array(bin.length); for (let j = 0; j < bin.length; j++) u[j] = bin.charCodeAt(j); return u; }
 function b64ToBlob(b64, mime) { const parts = []; const step = 1 << 20; for (let i = 0; i < b64.length; i += step) parts.push(b64ToBytes(b64.slice(i, i + step))); return new Blob(parts, { type: mime || 'application/octet-stream' }); }
 
@@ -835,13 +935,50 @@ const DB = {
     });
   },
   get: (st, k) => DB.tx(st, 'readonly', s => s.get(k)),
+  // 잠긴 캐릭터의 설정은 풀어 둔 채로 저장하지 않는다 (잠금 봉투 sealed만 저장)
+  strip(st, v) { if (st !== 'chars' || !v?.locked) return v; const o = { ...v }; for (const k of LOCK_KEYS) delete o[k]; return o; },
   all: st => DB.tx(st, 'readonly', s => s.getAll()),
   by: (st, idx, k) => DB.tx(st, 'readonly', s => s.index(idx).getAll(k)),
-  put: (st, v, k) => DB.tx(st, 'readwrite', s => { k !== undefined ? s.put(v, k) : s.put(v); }),
-  putMany: (st, arr) => DB.tx(st, 'readwrite', s => { for (const v of arr) s.put(v); }),
+  put: (st, v, k) => DB.tx(st, 'readwrite', s => { v = DB.strip(st, v); k !== undefined ? s.put(v, k) : s.put(v); }),
+  putMany: (st, arr) => DB.tx(st, 'readwrite', s => { for (const v of arr) s.put(DB.strip(st, v)); }),
   del: (st, k) => DB.tx(st, 'readwrite', s => { s.delete(k); }),
   delMany: (st, keys) => DB.tx(st, 'readwrite', s => { for (const k of keys) s.delete(k); }),
 };
+
+/* ───────── 잠금(암호화) ─────────
+   잠금 파일로 내보낸 캐릭터는 받은 사람이 설정(프롬프트·KB·인물 설정)을 볼 수 없다.
+   파일도, 받은 쪽 기기에 저장되는 설정도 AES-GCM으로 암호화되어 있고, 대화할 때만 메모리에서 풀어 쓴다. */
+const LOCK_KEYS = ['persona', 'instructions', 'sStyle', 'sNarr', 'sPlot', 'sBan', 'sEtc', 'sMain', 'cast', 'kb', 'dialogFmt'];
+const LOCK_PEPPER = 'oneonone-chat/lock/v1/7f3c9a1e-5b2d-4e8a-9c61-d0b4f2a7e815';
+const Lock = {
+  async key(salt, pw = '') {
+    const base = await crypto.subtle.importKey('raw', new TextEncoder().encode(LOCK_PEPPER + '\u0000' + pw), 'PBKDF2', false, ['deriveKey']);
+    return crypto.subtle.deriveKey({ name: 'PBKDF2', salt, iterations: 120000, hash: 'SHA-256' }, base, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);
+  },
+  async gz(bytes, dir) {
+    if (!('CompressionStream' in window)) return null;
+    const st = new Blob([bytes]).stream().pipeThrough(dir === 'in' ? new CompressionStream('gzip') : new DecompressionStream('gzip'));
+    return new Uint8Array(await new Response(st).arrayBuffer());
+  },
+  async seal(obj, pw = '') {
+    const salt = crypto.getRandomValues(new Uint8Array(16)), iv = crypto.getRandomValues(new Uint8Array(12));
+    let bytes = new TextEncoder().encode(JSON.stringify(obj)); const z = await Lock.gz(bytes, 'in'); if (z) bytes = z;
+    const data = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, await Lock.key(salt, pw), bytes));
+    return { salt: bytesToB64(salt), iv: bytesToB64(iv), data: bytesToB64(data), z: !!z, pw: !!pw };
+  },
+  async open(env, pw = '') {
+    let bytes;
+    try { bytes = new Uint8Array(await crypto.subtle.decrypt({ name: 'AES-GCM', iv: b64ToBytes(env.iv) }, await Lock.key(b64ToBytes(env.salt), pw), b64ToBytes(env.data))); }
+    catch { throw new Error(env.pw ? '비밀번호가 맞지 않습니다.' : '파일이 손상되었거나 이 앱에서 만든 잠금 파일이 아닙니다.'); }
+    if (env.z) bytes = await Lock.gz(bytes, 'out');
+    return JSON.parse(new TextDecoder().decode(bytes));
+  },
+  secrets(c) { const o = {}; for (const k of LOCK_KEYS) if (c[k] !== undefined) o[k] = c[k]; return o; },
+  // 저장된 잠긴 캐릭터를 불러올 때 메모리에서만 설정을 푼다
+  async unseal(c) { if (!c?.locked?.sealed) return c; try { Object.assign(c, await Lock.open(c.locked.sealed)); } catch (e) { console.warn('잠금 해제 실패', e); } return c; },
+};
+const isLocked = c => !!c?.locked;
+async function loadChars() { const list = (await DB.all('chars')).sort((a, b) => a.createdAt - b.createdAt); for (const c of list) await Lock.unseal(c); return list; }
 
 /* 같은 컴퓨터의 다른 창(메인 창·위젯)끼리 변경을 알린다 */
 const BC = 'BroadcastChannel' in window ? new BroadcastChannel('oneonone-chat') : null;
@@ -1081,8 +1218,10 @@ const topHeader = () => String(S.settings.sysHeader ?? DEFAULT_HEADER).trim();
 const withHeader = system => { const hd = topHeader(); return hd ? hd + '\n\n' + system : system; };
 // 스토리챗 메인 프롬프트: 여섯 칸을 순서대로 합친다 (예전에 캐릭터 창에서 만든 스토리챗의 설정은 ‘기타’로 들어간다)
 const STORY_SECS = [['sStyle', '문체'], ['sNarr', '지문·대사'], ['sPlot', '장르·스토리·전개'], ['sBan', '금지사항']];
-function storyMain(char, n, u) {
-  const out = [], f = v => fillNames(v || '', n, u).trim();
+const wholeStyle = c => c?.promptStyle === 'whole';
+function storyMain(char, n, u, raw = false) {
+  if (wholeStyle(char) && !raw) return fillNames(char.sMain || '', n, u).trim();
+  const out = [], f = raw ? v => (v || '').trim() : v => fillNames(v || '', n, u).trim();
   for (const [k, t] of STORY_SECS) if (f(char[k])) out.push(`## ${t}\n${f(char[k])}`);
   const cast = (char.cast || []).filter(x => (x.name || '').trim() || (x.detail || '').trim());
   if (cast.length) out.push('## 주연 캐릭터\n' + cast.map(x => `### ${(x.name || '').trim() || '(이름 없음)'}\n${f(x.detail) || '(세부 설정 없음)'}`).join('\n\n'));
@@ -1090,15 +1229,14 @@ function storyMain(char, n, u) {
   if (etc) out.push(`## 기타\n${etc}`);
   return out.join('\n\n');
 }
-const promptLen = c => c?.mode === 'story'
-  ? [...STORY_SECS.map(([k]) => c[k]), c.sEtc, c.persona, c.instructions, ...(c.cast || []).flatMap(x => [x.name, x.detail])].reduce((a, v) => a + (v || '').length, 0)
+const promptLen = c => c?.mode === 'story' ? (wholeStyle(c) ? (c.sMain || '').length : [...STORY_SECS.map(([k]) => c[k]), c.sEtc, c.persona, c.instructions, ...(c.cast || []).flatMap(x => [x.name, x.detail])].reduce((a, v) => a + (v || '').length, 0))
   : (c?.persona || '').length + (c?.instructions || '').length;
 function buildSystem(char, room, tags, msgs = S.msgs) {
   const n = char.name || '캐릭터', u = char.userName || '상대', story = char.mode === 'story';
   const mode = char.mode === 'face' ? S.settings.modeFace : S.settings.modeMessenger;
   const fmt = formatLines(tags, Voice.on(char), story ? imgModeOf(char) : false);
   let tpl = story ? String(S.settings.storyTemplate ?? DEFAULT_STORY) : String(S.settings.sysTemplate ?? DEFAULT_TEMPLATE);
-  tpl = tpl.replace(/\{\{대화방식\}\}/g, () => (mode || '').trim()).replace(/\{\{대사형식\}\}/g, () => (char.dialogFmt || '').trim() || DEFAULT_DIALOG);
+  tpl = tpl.replace(/\{\{대화방식\}\}/g, () => (mode || '').trim()).replace(/\{\{대사형식\}\}/g, () => (char.dialogFmt || '').trim() || (wholeStyle(char) ? `메인 프롬프트에 대사 형식이 정해져 있으면 그 형식, 없으면 ${DEFAULT_DIALOG}` : DEFAULT_DIALOG));
   if (tpl.includes('{{출력형식}}')) tpl = tpl.split('\n').flatMap(line => {
     if (!line.includes('{{출력형식}}')) return [line];
     const out = line.replace('{{출력형식}}', () => fmt); return out.trim() ? [out] : [];
@@ -1247,11 +1385,14 @@ async function listModels() {
   }
   return [...new Set(out)];
 }
-async function* sse(res) {
+const STALL_MS = 90000;
+async function* sse(res, stallMs = STALL_MS) {
   const reader = res.body.getReader(); const dec = new TextDecoder(); let buf = '';
   const emit = function* (line) { if (!line.startsWith('data:')) return; const d = line.slice(5).trim(); if (!d || d === '[DONE]') return; try { yield JSON.parse(d); } catch { } };
   for (;;) {
-    const { done, value } = await reader.read(); if (done) break;
+    let t; const stall = new Promise((_, rej) => { t = setTimeout(() => rej(Object.assign(new Error(`구글 서버의 응답이 ${Math.round(stallMs / 1000)}초 넘게 멈춰 있어 중단했습니다. 서버가 붐비는 것 같습니다. 다시 시도해 보세요.`), { stall: true })), stallMs); });
+    let r; try { r = await Promise.race([reader.read(), stall]); } catch (e) { if (e.stall) reader.cancel().catch(() => { }); throw e; } finally { clearTimeout(t); }
+    const { done, value } = r; if (done) break;
     buf += dec.decode(value, { stream: true });
     let i; while ((i = buf.indexOf('\n')) >= 0) { const line = buf.slice(0, i).replace(/\r$/, ''); buf = buf.slice(i + 1); yield* emit(line); }
   }
@@ -1378,9 +1519,15 @@ const Voice = {
     Voice.pending.set(key, job);
     return job;
   },
-  // 음성 요청을 한꺼번에 보내면 분당 한도에 걸리므로 한 번에 하나씩 보낸다
-  chain: Promise.resolve(), pending: new Map(),
-  queue(fn) { const run = Voice.chain.then(fn, fn); Voice.chain = run.catch(() => { }); return run; },
+  pending: new Map(), gen: 0,
+  // 한꺼번에 보내면 분당 한도에 걸리고, 하나씩만 보내면 늦어지므로 동시에 둘까지 보낸다
+  running: 0, waiting: [],
+  queue(fn) {
+    return new Promise((res, rej) => {
+      const go = () => { Voice.running++; Promise.resolve().then(fn).then(res, rej).finally(() => { Voice.running--; Voice.waiting.shift()?.(); }); };
+      Voice.running < 2 ? go() : Voice.waiting.push(go);
+    });
+  },
   finish(j, key, say, onCost) {
     const inl = (j.candidates?.[0]?.content?.parts || []).map(p => p.inlineData || p.inline_data).find(Boolean);
     if (!inl?.data) throw new Error('음성 데이터가 비어 있습니다.');
@@ -1516,7 +1663,7 @@ function renderAll() {
   $('#btnWidget').hidden = !char || !!CAPN || !!WIDGET;
   $('#roomTitle').textContent = room ? room.title : '';
   $('#who').hidden = !char;
-  $('#main').classList.toggle('story', char?.mode === 'story');
+  $('#main').classList.toggle('storymode', char?.mode === 'story');
   $('#main').classList.toggle('img-flat', char?.mode === 'story' && imgModeOf(char) !== 'stage');
   $('#btnImgMode').hidden = char?.mode !== 'story'; $('#btnImgMode').textContent = IMG_LABEL[imgModeOf(char)] || '';
   $('#input').placeholder = char?.mode === 'story' ? '행동이나 대사를 입력하세요' : '메시지를 입력하세요  (*행동*  **강조**)';
@@ -1538,42 +1685,103 @@ function renderModelQuick() {
   const dl = $('#modelList'); dl.textContent = ''; for (const id of modelOptions()) dl.append(h('option', { value: id }));
 }
 // 말풍선 안의 간단한 마크다운: *행동·기울임*, **굵게**, ~~취소선~~, `코드`. (HTML로 해석하지 않고 글자 그대로 안전하게 만든다)
-function mdInline(text) {
+// full=true(스토리챗 본문)이면 링크, ***굵은 기울임***, _기울임_, __굵게__, 일부 HTML 태그(<u> <b> <i> <br> <span style="color">…)까지 읽는다
+const MD_TAGS = 'u|b|i|s|del|ins|sub|sup|small|mark|strong|em|big';
+function mdInline(text, full = false) {
   const frag = document.createDocumentFragment();
-  const re = /(!\[[^\]\n]*\]\(https?:\/\/[^\s)]+\))|(`[^`\n]+`)|(\*\*(?!\s)[^*\n]+?(?<!\s)\*\*)|(~~(?!\s)[^~\n]+?(?<!\s)~~)|(\*(?!\s)[^*\n]+?(?<!\s)\*)/g;
-  let last = 0, m;
+  const simple = /(!\[[^\]\n]*\]\(https?:\/\/[^\s)]+\))|(`[^`\n]+`)|(\*\*(?!\s)[^*\n]+?(?<!\s)\*\*)|(~~(?!\s)[^~\n]+?(?<!\s)~~)|(\*(?!\s)[^*\n]+?(?<!\s)\*)/g;
+  const rich = new RegExp([
+    /(\\[\\`*_~\[\]#>|<-])/.source,                                         // 1 이스케이프
+    /(!\[[^\]\n]*\]\(https?:\/\/[^\s)]+\))/.source,                          // 2 그림
+    /(`[^`\n]+`)/.source,                                                    // 3 코드
+    /(\*\*\*(?!\s)[^*\n]+?(?<!\s)\*\*\*)/.source,                            // 4 굵은 기울임
+    /(\*\*(?!\s)[^*\n]+?(?<!\s)\*\*)/.source,                                // 5 굵게
+    /((?<![\p{L}\p{N}_])__(?!\s)[^_\n]+?(?<!\s)__(?![\p{L}\p{N}_]))/.source, // 6 굵게
+    /(~~(?!\s)[^~\n]+?(?<!\s)~~)/.source,                                    // 7 취소선
+    /(\*(?!\s)[^*\n]+?(?<!\s)\*)/.source,                                    // 8 기울임(행동)
+    /((?<![\p{L}\p{N}_])_(?!\s)[^_\n]+?(?<!\s)_(?![\p{L}\p{N}_]))/.source,   // 9 기울임
+    /(\[[^\]\n]+\]\(https?:\/\/[^\s)]+\))/.source,                           // 10 링크
+    `(<(${MD_TAGS})>[^\\n]*?</\\12>)`,                                       // 11 태그 (12 태그 이름)
+    /(<br\s*\/?>)/.source,                                                   // 13 줄바꿈
+    /(<(?:span|font)\s+(?:style\s*=\s*["']\s*color\s*:\s*([^;"']+);?\s*["']|color\s*=\s*["']?([#\w(),.\s%]+?)["']?)\s*>[^\n]*?<\/(?:span|font)>)/.source, // 15
+  ].join('|'), 'gu');
+  const re = full ? rich : simple; let last = 0, m;
+  const sub = t => mdInline(t, full);
   while ((m = re.exec(text))) {
     if (m.index > last) frag.append(text.slice(last, m.index));
     const t = m[0];
-    if (m[1]) { const mm = t.match(/^!\[([^\]]*)\]\((.+)\)$/); frag.append(h('img', { class: 'mdimg', src: mm[2], alt: mm[1], loading: 'lazy', referrerpolicy: 'no-referrer' })); }
-    else if (m[2]) frag.append(h('code', { text: t.slice(1, -1) }));
-    else if (m[3]) frag.append(h('strong', null, mdInline(t.slice(2, -2))));
-    else if (m[4]) frag.append(h('s', null, mdInline(t.slice(2, -2))));
-    else frag.append(h('em', { class: 'act' }, mdInline(t.slice(1, -1))));
+    if (!full) {
+      if (m[1]) { const mm = t.match(/^!\[([^\]]*)\]\((.+)\)$/); frag.append(h('img', { class: 'mdimg', src: mm[2], alt: mm[1], loading: 'lazy', referrerpolicy: 'no-referrer' })); }
+      else if (m[2]) frag.append(h('code', { text: t.slice(1, -1) }));
+      else if (m[3]) frag.append(h('strong', null, sub(t.slice(2, -2))));
+      else if (m[4]) frag.append(h('s', null, sub(t.slice(2, -2))));
+      else frag.append(h('em', { class: 'act' }, sub(t.slice(1, -1))));
+    } else if (m[1]) frag.append(t.slice(1));
+    else if (m[2]) { const mm = t.match(/^!\[([^\]]*)\]\((.+)\)$/); frag.append(h('img', { class: 'mdimg', src: mm[2], alt: mm[1], loading: 'lazy', referrerpolicy: 'no-referrer' })); }
+    else if (m[3]) frag.append(h('code', { text: t.slice(1, -1) }));
+    else if (m[4]) frag.append(h('strong', null, h('em', null, sub(t.slice(3, -3)))));
+    else if (m[5] || m[6]) frag.append(h('strong', null, sub(t.slice(2, -2))));
+    else if (m[7]) frag.append(h('s', null, sub(t.slice(2, -2))));
+    else if (m[8]) frag.append(h('em', { class: 'act' }, sub(t.slice(1, -1))));
+    else if (m[9]) frag.append(h('em', null, sub(t.slice(1, -1))));
+    else if (m[10]) { const mm = t.match(/^\[([^\]]+)\]\((.+)\)$/); frag.append(h('a', { href: mm[2], target: '_blank', rel: 'noopener noreferrer' }, sub(mm[1]))); }
+    else if (m[11]) { const tag = m[12].toLowerCase(), inner = t.slice(tag.length + 2, -(tag.length + 3)); const map = { b: 'strong', i: 'em', del: 's', big: 'span' }; const el = h(map[tag] || tag, tag === 'big' ? { class: 'big' } : null, sub(inner)); frag.append(el); }
+    else if (m[13]) frag.append(h('br'));
+    else if (m[14]) {
+      const col = (m[15] || m[16] || '').trim(), inner = t.replace(/^<[^>]+>/, '').replace(/<\/(?:span|font)>$/, '');
+      const el = h('span', null, sub(inner)); if (col && CSS.supports('color', col)) el.style.color = col; frag.append(el);
+    }
     last = re.lastIndex;
   }
   if (last < text.length) frag.append(text.slice(last));
   return frag;
 }
-// 스토리챗 본문: 문단, ``` 블록(HUD·상태창), 제목, 구분선, 인용
+// 스토리챗 본문: 문단, 코드 블록(HUD·상태창), 제목, 목록, 표, 구분선, 인용. <!-- 주석 -->은 보이지 않는다
 function sceneImg(code) {
   const a = findAsset(code); if (!a) return null;
   const media = a.kind === 'video' ? Object.assign(h('video', { src: a.url, autoplay: true, loop: true, playsinline: true }), { muted: true }) : h('img', { src: a.url, alt: code, loading: 'lazy' });
   return h('figure', { class: 'sc' }, media);
 }
 // opt.img: 'show' 이미지 줄을 그림으로 / 'hide' 이미지 줄을 지움
+const LIST_RE = /^(\s*)([-*+]|\d{1,3}[.)])\s+(.*)$/;
+const TABLE_SEP = /^\s*\|?\s*:?-{2,}:?\s*(\|\s*:?-{2,}:?\s*)*\|?\s*$/;
+const cells = l => l.trim().replace(/^\|/, '').replace(/(?<!\\)\|$/, '').split(/(?<!\\)\|/).map(c => c.trim().replace(/\\\|/g, '|'));
 function mdBlock(text, opt = {}) {
-  const frag = document.createDocumentFragment(); const lines = String(text).replace(/\r/g, '').split('\n'); let i = 0, para = [], m;
-  const flush = () => { if (!para.length) return; const p = h('p'); para.forEach((l, k) => { if (k) p.append(h('br')); p.append(mdInline(l)); }); frag.append(p); para = []; };
+  let src = String(text).replace(/\r/g, '').replace(/<!--[\s\S]*?-->/g, '');
+  if (opt.streaming) src = src.replace(/<!--[\s\S]*$/, ''); // 쓰는 중인 주석은 숨김
+  const frag = document.createDocumentFragment(); const lines = src.split('\n'); let i = 0, para = [], m;
+  const inl = l => mdInline(l, true);
+  const flush = () => { if (!para.length) return; const p = h('p'); para.forEach((l, k) => { if (k) p.append(h('br')); p.append(inl(l)); }); frag.append(p); para = []; };
   while (i < lines.length) {
     const l = lines[i];
-    if (/^\s*```/.test(l)) { flush(); const buf = []; i++; while (i < lines.length && !/^\s*```/.test(lines[i])) buf.push(lines[i++]); i++; frag.append(h('pre', { class: 'hud', text: buf.join('\n') })); continue; }
+    if ((m = l.match(/^\s*(`{3,}|~{3,})/))) {
+      flush(); const fence = m[1], buf = []; i++;
+      while (i < lines.length && !lines[i].trim().startsWith(fence)) buf.push(lines[i++]);
+      i++; frag.append(h('pre', { class: 'hud', text: buf.join('\n') })); continue;
+    }
     if (!l.trim()) { flush(); i++; continue; }
     if ((m = l.match(IMG_LINE))) { flush(); if (opt.img === 'show') { const f = sceneImg(m[1].trim()); if (f) frag.append(f); } i++; continue; }
     if (opt.streaming && i === lines.length - 1 && /^\s*\[\[[^\]\n]*\]?$/.test(l)) { i++; continue; } // 쓰는 중인 이미지 줄은 잠시 숨김
-    if ((m = l.match(/^#{1,4}\s+(.*)$/))) { flush(); frag.append(h('div', { class: 'sh' }, mdInline(m[1]))); i++; continue; }
+    if ((m = l.match(/^\s{0,3}(#{1,6})\s+(.*?)(?:\s+#+)?\s*$/))) { flush(); frag.append(h('div', { class: 'sh h' + m[1].length, role: 'heading', 'aria-level': String(Math.min(6, m[1].length + 2)) }, inl(m[2]))); i++; continue; }
     if (/^\s*([-*_])(\s*\1){2,}\s*$/.test(l)) { flush(); frag.append(h('hr')); i++; continue; }
-    if (/^>/.test(l)) { flush(); const buf = []; while (i < lines.length && /^>/.test(lines[i])) buf.push(lines[i++].replace(/^>\s?/, '')); frag.append(h('blockquote', null, mdBlock(buf.join('\n')))); continue; }
+    if (/^\s*>/.test(l)) { flush(); const buf = []; while (i < lines.length && /^\s*>/.test(lines[i])) buf.push(lines[i++].replace(/^\s*>\s?/, '')); frag.append(h('blockquote', null, mdBlock(buf.join('\n'), opt))); continue; }
+    if (l.includes('|') && i + 1 < lines.length && TABLE_SEP.test(lines[i + 1])) {
+      flush(); const head = cells(l), aligns = cells(lines[i + 1]).map(c => c.startsWith(':') && c.endsWith(':') ? 'center' : c.endsWith(':') ? 'right' : ''); i += 2;
+      const tb = h('tbody'); while (i < lines.length && lines[i].includes('|') && lines[i].trim()) { const r = cells(lines[i++]); tb.append(h('tr', null, head.map((_, k) => { const td = h('td', null, inl(r[k] || '')); if (aligns[k]) td.style.textAlign = aligns[k]; return td; }))); }
+      frag.append(h('div', { class: 'tbl' }, h('table', null, h('thead', null, h('tr', null, head.map((c, k) => { const th = h('th', null, inl(c)); if (aligns[k]) th.style.textAlign = aligns[k]; return th; }))), tb))); continue;
+    }
+    if (LIST_RE.test(l) && !/^\s*\*[^*\s][^*]*\*\s*$/.test(l)) { // *행동* 한 줄은 목록이 아니다
+      flush(); const items = [];
+      while (i < lines.length && (m = lines[i].match(LIST_RE))) { items.push({ ind: m[1].replace(/\t/g, '  ').length, ord: /\d/.test(m[2]), start: parseInt(m[2]) || 1, text: m[3] }); i++;
+        while (i < lines.length && lines[i].trim() && !LIST_RE.test(lines[i]) && /^\s{2,}/.test(lines[i])) items.at(-1).text += '\n' + lines[i++].trim(); }
+      const build = (from, ind) => { const first = items[from]; const list = first.ord ? h('ol', first.start !== 1 ? { start: String(first.start) } : null) : h('ul'); let k = from;
+        while (k < items.length && items[k].ind >= ind && !(items[k].ind <= ind + 1 && items[k].ord !== first.ord)) {
+          if (items[k].ind > ind + 1 && list.lastChild) { const [sub, nk] = build(k, items[k].ind); list.lastChild.append(sub); k = nk; continue; }
+          const li = h('li'); items[k].text.split('\n').forEach((t, q) => { if (q) li.append(h('br')); li.append(inl(t)); }); list.append(li); k++;
+        } return [list, k]; };
+      let k = 0; while (k < items.length) { const [list, nk] = build(k, items[k].ind); frag.append(list); k = nk; }
+      continue;
+    }
     para.push(l); i++;
   }
   flush(); return frag;
@@ -1614,21 +1822,39 @@ function msgNode(m) {
   g.append(metaNode(m, g));
   return g;
 }
+const LogCache = { ctx: '', nodes: new Map(), room: null };
 function renderLog(keep) {
-  const log = $('#log'); const top = log.scrollTop; log.style.scrollBehavior = 'auto'; log.textContent = '';
-  const vis = S.msgs.filter(m => m.role !== 'note');
+  const log = $('#log'); const top = log.scrollTop, nearBottom = log.scrollHeight - top - log.clientHeight < 120; log.style.scrollBehavior = 'auto';
+  const char = curChar(), room = curRoom();
+  const ctx = [char?.id, char?.mode, char?.name, imgModeOf(char || {}), Stage.tags().join(','), S.settings.showUsage, Voice.on(char), S.assets.length, S.settings.readScale].join('|');
+  const roomChanged = LogCache.room !== room?.id, prev = ctx === LogCache.ctx && !roomChanged ? LogCache.nodes : new Map();
+  const live = new Set([...log.querySelectorAll('[data-live]')].map(n => n.dataset.live));
+  const next = new Map(); LogCache.ctx = ctx; LogCache.room = room?.id; LogCache.nodes = next;
+  const vis = S.msgs.filter(m => m.role !== 'note'), lastId = S.msgs[S.msgs.length - 1]?.id;
+  const node = m => {
+    const sig = [m.text, m.archived, m.id === lastId, m.cost?.chat, m.cost?.voice, m.usage?.o, (m.kb || []).join()].join('\u0001');
+    const old = prev.get(m.id); if (old && old.sig === sig && old.m === m) { next.set(m.id, old); return old.el; }
+    const el = msgNode(m); if (!old && !roomChanged && prev.size && !live.has(m.id)) el.classList.add('enter');
+    next.set(m.id, { sig, el, m }); return el;
+  };
+  const out = [];
   const list = S.showAll ? vis : vis.slice(-300);
-  if (list.length < vis.length) log.append(h('button', { class: 'older quiet', onclick: () => { S.showAll = true; renderLog(); } }, '이전 대화 모두 보기'));
+  if (list.length < vis.length) out.push(h('button', { class: 'older quiet', onclick: () => { S.showAll = true; renderLog(); } }, '이전 대화 모두 보기'));
   let prevDay = '';
   list.forEach((m, i) => {
-    const day = fmtDay(m.ts); if (day !== prevDay) { log.append(h('div', { class: 'day', text: day })); prevDay = day; }
-    log.append(msgNode(m));
-    if (m.archived && list[i + 1] && !list[i + 1].archived) log.append(h('div', { class: 'mark', text: '여기까지는 요약해서 기억하고 있습니다' }));
+    const day = fmtDay(m.ts); if (day !== prevDay) { out.push(h('div', { class: 'day', text: day })); prevDay = day; }
+    out.push(node(m));
+    if (m.archived && list[i + 1] && !list[i + 1].archived) out.push(h('div', { class: 'mark', text: '여기까지는 요약해서 기억하고 있습니다' }));
   });
-  if (!vis.length && curChar()) log.append(h('div', { class: 'day', text: '첫 마디를 건네 보세요' }));
-  log.scrollTop = keep ? top : log.scrollHeight; log.style.scrollBehavior = '';
+  if (!vis.length && char) out.push(h('div', { class: 'day', text: '첫 마디를 건네 보세요' }));
+  log.replaceChildren(...out);
+  if (roomChanged) { log.classList.remove('switch'); void log.offsetWidth; log.classList.add('switch'); }
+  if (keep) log.scrollTop = top;
+  else if (!roomChanged && nearBottom && !matchMedia('(prefers-reduced-motion:reduce)').matches) { log.scrollTop = top; log.style.scrollBehavior = ''; log.scrollTo({ top: log.scrollHeight, behavior: 'smooth' }); return; }
+  else log.scrollTop = log.scrollHeight;
+  log.style.scrollBehavior = '';
 }
-const toBottom = () => { const log = $('#log'); log.scrollTop = log.scrollHeight; };
+const toBottom = smooth => { const log = $('#log'); if (smooth && !matchMedia('(prefers-reduced-motion:reduce)').matches) log.scrollTo({ top: log.scrollHeight, behavior: 'smooth' }); else log.scrollTop = log.scrollHeight; };
 function updateComposer() {
   $('#btnSend').hidden = S.busy; $('#btnStop').hidden = !S.busy;
   if (!S.busy) refreshEstimate();
@@ -1652,7 +1878,7 @@ async function sendUser(text) {
   renderLog();
   generateReply();
 }
-function stopReply() { if (S.auto) { S.auto = null; updateAuto(); } if (S.abort) S.abort.abort(); Voice.stop(); }
+function stopReply() { if (S.auto) { S.auto = null; updateAuto(); } if (S.abort) S.abort.abort(); Voice.gen++; Voice.stop(); }
 
 document.addEventListener('pointerdown', () => Voice.unlock(), { once: true, capture: true });
 async function generateReply(extraNote) {
@@ -1661,6 +1887,9 @@ async function generateReply(extraNote) {
   S.busy = true; S.abort = new AbortController(); Voice.warned = false; updateComposer(); clearTimeout(S.nudgeTimer);
   const roomId = room.id, tags = Stage.tags(), voice = Voice.on(char), story = char.mode === 'story';
   const vCost = { usd: 0, jobs: [] }; let saved = null;
+  // 목소리: 준비된 대사는 글과 맞춰 읽고, 늦어지면 글을 먼저 보여 준 뒤 목소리는 도착하는 대로 차례로 읽는다
+  const gen = ++Voice.gen; Voice.stop(); let synced = true, playChain = Promise.resolve();
+  const VOICE_WAIT = 4000;
   const onVoice = usd => { vCost.usd += usd; spend(roomId, 'voice', usd); if (saved) { saved.cost = { ...saved.cost, voice: vCost.usd }; DB.put('msgs', saved); } };
   const sysText = buildSystem(char, room, tags), kbUsed = buildSystem.kb || [];
   const storyEl = story ? h('div', { class: 'story' }) : null; let emoSet = false;
@@ -1674,7 +1903,13 @@ async function generateReply(extraNote) {
   const pushLine = raw => {
     const p = parseLine(raw, tags, char.name); if (!p) return;
     p.raw = raw.trim();
-    if (voice && p.text) { p.audio = Voice.synth(char, p.text, p.style, onVoice).catch(e => { Voice.fail(e); return null; }); vCost.jobs.push(p.audio); }
+    if (voice && p.text) {
+      p.audio = Voice.synth(char, p.text, p.style, onVoice).catch(e => { Voice.fail(e); return null; }); vCost.jobs.push(p.audio);
+      p.played = playChain = playChain.then(async () => {
+        const url = await Promise.race([p.audio, sleep(90000).then(() => null)]);
+        if (url && Voice.gen === gen && S.ui.roomId === roomId) { if (!synced) Stage.talk(); await Voice.play(url); await sleep(120); }
+      });
+    }
     queue.push(p);
   };
   const pump = (async () => {
@@ -1682,14 +1917,14 @@ async function generateReply(extraNote) {
       if (!alive()) break;
       const p = queue.shift();
       if (!p) { if (streamDone) break; await sleep(50); continue; }
-      let url = null;
-      if (p.audio) url = await Promise.race([p.audio, sleep(45000).then(() => null)]);
+      let ready = false;
+      if (p.audio && synced) { ready = await Promise.race([p.audio.then(Boolean), sleep(VOICE_WAIT).then(() => 'late')]); if (ready === 'late') { synced = false; ready = false; } }
       if (!alive()) break;
       if (p.emo) Stage.setEmotion(p.emo);
       revealed.push(p.raw);
       if (!p.text) continue;
-      const nb = bubbleEl(p.text); nb.classList.add('new'); group.append(nb); Stage.talk(); toBottom(); HOOK.line?.(p.text, lineNo++);
-      if (url) { await Voice.play(url); await sleep(120); }
+      const nb = bubbleEl(p.text); nb.classList.add('new'); group.append(nb); Stage.talk(); toBottom(true); HOOK.line?.(p.text, lineNo++);
+      if (ready && synced) await p.played;
       else await sleep(Math.min(1500, 320 + p.text.length * 26) * (S.settings.speed || 1));
     }
   })();
@@ -1733,7 +1968,7 @@ async function generateReply(extraNote) {
   }
   S.busy = false; S.abort = null; HOOK.replyEnd?.(revealed.length);
   if (S.ui.roomId !== roomId) { S.pending = null; updateComposer(); return; } // 다른 방으로 옮긴 뒤 도착한 답은 저장만 해 둔다
-  if (saved) S.msgs.push(saved);
+  if (saved) { S.msgs.push(saved); group.dataset.live = saved.id; }
   if (saved && vCost.jobs.length) Promise.allSettled(vCost.jobs).then(() => { if (!S.busy && S.ui.roomId === roomId) renderLog(true); });
   renderLog(); updateComposer();
   if (S.pending) { const t = S.pending; S.pending = null; sendUser(t); return; }
@@ -1877,6 +2112,7 @@ function fillPreview() {
   const turns = buildContents(char, room);
   const sys = withHeader(buildSystem(char, room, Stage.tags()));
   const chars = sys.length + turns.reduce((a, t) => a + t.parts[0].text.length, 0);
+  if (isLocked(char)) { $('#pvText').textContent = `※ 전체 약 ${num(chars)}자 (최근 대화 ${turns.length}턴)\n\n🔒 잠긴 캐릭터라 보낼 내용은 볼 수 없습니다.`; return; }
   $('#pvText').textContent = `※ 전체 약 ${num(chars)}자 (고정 지침·기억 ${num(sys.length)}자 + 최근 대화 ${turns.length}턴)\n\n${sys}\n\n──── 이어서 최근 대화 원문 ${turns.length}턴이 전달됩니다 ────\n\n[가장 마지막 턴]\n${turns[turns.length - 1].parts[0].text}`;
 }
 $('#pvWrap').addEventListener('toggle', () => { if ($('#pvWrap').open) fillPreview(); });
@@ -1886,27 +2122,43 @@ $('#btnMemory').onclick = () => { $('#summMsg').textContent = ''; fillMemory(); 
 
 /* ───────── 캐릭터 화면 ───────── */
 const saveChar = debounce(() => { const c = curChar(); if (c) DB.put('chars', c); }, 300);
+function applyLockUi(c) {
+  const lk = isLocked(c);
+  for (const n of $$('.lockNote')) n.hidden = !lk;
+  for (const n of $$('.lockHide')) n.hidden = lk;
+  $('#kbBlock').hidden = lk; $('#btnCharExport').hidden = lk;
+  $('[data-dtab="kb"]').hidden = lk;
+  if (lk) { $('[data-dtab="prompt"]').hidden = true; $('[data-dtab="main"]').hidden = true; }
+}
 function moveBlocks(story) {
   const kb = $('#kbBlock'), as = $('#assetBlock'), ex = $('#exportBlock');
   if (story) { $('#storyKb').append(kb); $('#storyImgs').append(as); $('#storyExport').append(ex); }
   else { const home = $('#charHome'); home.before(kb); home.before(as); home.before(ex); }
   $('#assetTitle').textContent = story ? '그 밖의 이미지' : '모습 (일러스트·영상)';
-  $('#assetHintStory').hidden = !story; $('#assetHintChar').hidden = story;
+  $('#assetHintStory').hidden = !story || wholeStyle(curChar()); $('#assetHintChar').hidden = story && !wholeStyle(curChar());
   $('#btnCharExport').textContent = story ? '이 스토리챗 내보내기' : '이 캐릭터 내보내기';
   $('#btnCharDelete').textContent = story ? '스토리챗 삭제' : '캐릭터 삭제';
 }
 const openEditor = () => isStory(curChar()) ? openStory() : openChar();
-function fillCharFields(c) { for (const f of $$('[data-char]')) { const k = f.dataset.char; if (f.type === 'checkbox') f.checked = !!c[k]; else f.value = c[k] ?? ''; } }
+function fillCharFields(c) { for (const f of $$('[data-char]')) { const k = f.dataset.char; if (isLocked(c) && LOCK_KEYS.includes(k)) { f.value = ''; continue; } if (f.type === 'checkbox') f.checked = !!c[k]; else f.value = c[k] ?? ''; } }
 function openStory(tab) {
   const c = curChar(); if (!c) return;
   c.cast = c.cast || []; if (!c.storyImg) c.storyImg = 'stage';
   // 예전에 캐릭터 창에서 만든 스토리챗: 적어 둔 설정과 추가 지침을 ‘기타’ 칸으로 옮겨 보이게 한다
   if ((c.persona || '').trim() || (c.instructions || '').trim()) { c.sEtc = [c.sEtc, c.persona, c.instructions].filter(v => (v || '').trim()).join('\n\n'); c.persona = c.instructions = ''; saveChar(); }
   moveBlocks(true); fillCharFields(c); refreshCounts(); renderKb(); renderCast(); renderAssets();
-  showStoryTab(tab || $('#dlgStory').dataset.tab || 'base');
+  showStoryTab(tab || $('#dlgStory').dataset.tab || 'base'); updateStoryTabs(); applyLockUi(c);
+  if (isLocked(c) && $('#dlgStory').dataset.tab !== 'img') showStoryTab('base');
   if (!$('#dlgStory').open) $('#dlgStory').showModal();
 }
+function updateStoryTabs() {
+  if (isLocked(curChar())) return applyLockUi(curChar());
+  const whole = wholeStyle(curChar());
+  $('[data-dtab="prompt"]').hidden = whole; $('[data-dtab="main"]').hidden = !whole;
+  const t = $('#dlgStory').dataset.tab; if ((whole && t === 'prompt') || (!whole && t === 'main')) showStoryTab(whole ? 'main' : 'prompt');
+}
 function showStoryTab(t) {
+  if (t === 'prompt' && wholeStyle(curChar())) t = 'main';
   $('#dlgStory').dataset.tab = t;
   for (const b of $$('[data-dtab]')) b.setAttribute('aria-selected', String(b.dataset.dtab === t));
   for (const p of $$('[data-pane]')) p.hidden = p.dataset.pane !== t;
@@ -1964,7 +2216,7 @@ $('#btnCastAdd').onclick = () => { const c = curChar(); if (!c) return; (c.cast 
 function openChar() {
   const c = curChar(); if (!c) return;
   if (isStory(c)) return openStory();
-  moveBlocks(false);
+  moveBlocks(false); applyLockUi(c);
   fillCharFields(c);
   refreshCounts(); renderKb(); if (!c.proPerDay) $('[data-char="proPerDay"]').value = '3';
   $('#voiceMsg').textContent = '';
@@ -1972,10 +2224,16 @@ function openChar() {
   renderAssets(); $('#dlgChar').showModal();
 }
 for (const f of $$('[data-char]')) f.addEventListener(f.type === 'checkbox' || f.tagName === 'SELECT' || f.type === 'color' ? 'change' : 'input', () => {
-  const c = curChar(); if (!c) return; c[f.dataset.char] = f.type === 'checkbox' ? f.checked : f.value; if (f.dataset.char === 'proPerDay' || f.dataset.char === 'proOn') c.proNext = null; saveChar(); charTotal();
+  const c = curChar(); if (!c) return; if (isLocked(c) && LOCK_KEYS.includes(f.dataset.char)) return;
+  c[f.dataset.char] = f.type === 'checkbox' ? f.checked : f.value; if (f.dataset.char === 'proPerDay' || f.dataset.char === 'proOn') c.proNext = null; saveChar(); charTotal();
   // 같은 항목이 두 창에 있으므로(이름·색 등) 다른 쪽도 맞춘다
   for (const g of $$(`[data-char="${f.dataset.char}"]`)) if (g !== f) { if (g.type === 'checkbox') g.checked = f.checked; else g.value = f.value; }
   if (['name', 'color', 'storyImg'].includes(f.dataset.char)) renderAll();
+  if (f.dataset.char === 'promptStyle') {
+    // 통째로 넣기로 처음 바꿀 때, 항목별로 써 둔 내용이 있으면 합쳐서 채워 둔다
+    if (wholeStyle(c) && !(c.sMain || '').trim()) { const pre = storyMain(c, c.name, c.userName, true); if (pre) { c.sMain = pre; $('[data-char="sMain"]').value = pre; saveChar(); } }
+    updateStoryTabs(); renderAssets(); charTotal();
+  }
 });
 // 글자 수 표시 (UTF-16 기준)
 function addCounter(ta) { const sp = h('span', { class: 'cnt' }); ta.after(sp); ta._cnt = () => { sp.textContent = num(ta.value.length) + '자'; }; ta.addEventListener('input', ta._cnt); ta._cnt(); }
@@ -1985,6 +2243,7 @@ function charTotal() {
   const c = curChar(); if (!c) return;
   const kb = (c.kb || []).reduce((a, e) => a + (e.text || '').length, 0);
   $('#charTotal').textContent = `캐릭터 설정 + 추가 지침 ${num(promptLen(c))}자, KB 전체 ${num(kb)}자 (${(c.kb || []).length}개 항목). 글자 수는 UTF-16 기준입니다.`;
+  $('#storyTotal2').textContent = `메인 프롬프트 ${num((c.sMain || '').length)}자, KB 전체 ${num(kb)}자 (${(c.kb || []).length}개 항목). 글자 수는 UTF-16 기준입니다.`;
   $('#storyTotal').textContent = `메인 프롬프트 합계 ${num(promptLen(c))}자 (주연 ${(c.cast || []).length}명 포함), KB 전체 ${num(kb)}자 (${(c.kb || []).length}개 항목). 글자 수는 UTF-16 기준입니다.`;
 }
 function renderKb() {
@@ -2106,7 +2365,7 @@ $('#btnLogSave').onclick = saveLog;
 
 function renderAssets() {
   const c = curChar(); const grid = $('#assetGrid'); grid.textContent = '';
-  const castSet = isStory(c) ? new Set((c.cast || []).map(x => (x.name || '').trim()).filter(Boolean)) : null;
+  const castSet = isStory(c) && !wholeStyle(c) ? new Set((c.cast || []).map(x => (x.name || '').trim()).filter(Boolean)) : null;
   const shown = castSet ? S.assets.filter(a => !castSet.has(grpOf(a.tag))) : S.assets;
   const dl = $('#tagList'); dl.textContent = ''; for (const t of new Set([...TAG_HINTS, ...Stage.tags()])) dl.append(h('option', { value: t }));
   if (!shown.length) grid.append(h('p', { class: 'hint', text: '아직 올린 파일이 없습니다.' }));
@@ -2184,7 +2443,7 @@ $('#btnPromptReset').onclick = () => {
 };
 function openSettings() {
   fillSetFields();
-  $('#proHint').textContent = proHintText(); $('#proMsg').textContent = '';
+  $('#proHint').textContent = proHintText(); $('#proMsg').textContent = ''; renderPerm();
   $('#verInfo').textContent = `지금 버전: v${APP_VERSION} (${platformName()}). 시작할 때와 6시간마다 새 버전이 있는지 자동으로 확인합니다.`; $('#updMsg').textContent = '';
   $('#autostartRow').hidden = !DESK;
   if (DESK) DESK.getAutostart().then(v => { $('#autostart').checked = !!v; }).catch(() => { });
@@ -2368,10 +2627,26 @@ async function assetParts(assets) {
   }
   return parts;
 }
+const charFileName = (c, lock) => `${c.name || (isStory(c) ? '스토리챗' : '캐릭터')}.${isStory(c) ? '스토리챗' : '캐릭터'}${lock ? '.잠금' : ''}.json`;
 $('#btnCharExport').onclick = async () => {
-  saveChar.flush(); const c = curChar(); const assets = await DB.by('assets', 'charId', c.id);
+  saveChar.flush(); const c = curChar(); if (isLocked(c)) return $('#btnCharExportLock').click();
+  const assets = await DB.by('assets', 'charId', c.id);
   const parts = ['{"type":"oneonone-character","v":1,"char":', JSON.stringify(c), ',"assets":[', ...await assetParts(assets), ']}'];
-  download(new Blob(parts, { type: 'application/json' }), `${c.name || '캐릭터'}.캐릭터.json`);
+  download(new Blob(parts, { type: 'application/json' }), charFileName(c));
+};
+$('#btnCharExportLock').onclick = () => { $('#lockPw').value = ''; $('#dlgLock').showModal(); };
+$('#btnLockGo').onclick = async () => {
+  saveChar.flush(); const c = curChar(); if (!c) return;
+  const b = $('#btnLockGo'); b.disabled = true; b.textContent = '암호화하는 중…';
+  try {
+    const assets = await DB.by('assets', 'charId', c.id), list = [];
+    for (const a of assets) list.push({ tag: a.tag, kind: a.kind, name: a.name, mime: a.blob.type, data: await blobToB64(a.blob) });
+    const { locked, proNext, ...plain } = c;
+    const env = await Lock.seal({ type: 'oneonone-character', v: 1, char: plain, assets: list }, $('#lockPw').value.trim());
+    download(new Blob([JSON.stringify({ type: 'oneonone-locked', v: 1, name: c.name, story: isStory(c), ...env })], { type: 'application/json' }), charFileName(c, true));
+    $('#dlgLock').close(); toast('잠금 파일을 만들었습니다.' + (env.pw ? ' 받는 사람에게 비밀번호를 따로 알려 주세요.' : ''), 5000);
+  } catch (e) { toast('잠금 파일을 만들지 못했습니다. ' + e.message, 6000); }
+  b.disabled = false; b.textContent = '내보내기';
 };
 $('#btnBackup').onclick = async () => {
   const { apiKey, ...settings } = S.settings;
@@ -2387,12 +2662,19 @@ $('#btnCharImport').onclick = () => { importMode = 'char'; $('#importFile').clic
 $('#importFile').addEventListener('change', async e => {
   const file = e.target.files[0]; e.target.value = ''; if (!file) return;
   try {
-    const j = JSON.parse(await file.text());
+    let j = JSON.parse(await file.text()), locked = false;
+    if (j.type === 'oneonone-locked') {
+      let pw = '';
+      if (j.pw) { pw = prompt(`‘${j.name || '이 파일'}’에 비밀번호가 걸려 있습니다. 비밀번호를 입력하세요.`) ?? ''; if (!pw) return; }
+      j = await Lock.open(j, pw); locked = true;
+    }
     if (j.type === 'oneonone-character') {
-      const c = { ...j.char, id: uid(), createdAt: Date.now() };
+      const c = { ...j.char, id: uid(), createdAt: Date.now() }; delete c.proNext; delete c.locked;
+      if (locked) c.locked = { at: Date.now(), sealed: await Lock.seal(Lock.secrets(c)) };
       await DB.put('chars', c);
       for (const a of j.assets || []) await DB.put('assets', { id: uid(), charId: c.id, tag: a.tag, kind: a.kind, name: a.name, blob: b64ToBlob(a.data, a.mime) });
-      S.chars.push(c); $('#dlgSettings').close(); await selectChar(c.id); toast(`‘${c.name}’ 캐릭터를 가져왔습니다.`);
+      S.chars.push(c); $('#dlgSettings').close(); await selectChar(c.id);
+      toast(`‘${c.name}’ ${isStory(c) ? '스토리챗' : '캐릭터'}을(를) 가져왔습니다.${locked ? ' 잠긴 파일이라 설정은 볼 수 없습니다.' : ''}`, 5000);
     } else if (j.type === 'oneonone-backup') {
       if (importMode !== 'backup' && !confirm('전체 백업 파일입니다. 불러올까요?')) return;
       if (!confirm('백업을 불러오면 같은 캐릭터·방은 백업 내용으로 덮어씁니다. 계속할까요?')) return;
@@ -2532,19 +2814,64 @@ $('#btnProTest').onclick = async () => {
   try { const m = await proactiveFor(c, { force: true }); msg.textContent = m ? '보냈습니다. 대화창을 확인하세요.' : '보내지 못했습니다.'; }
   catch (e) { msg.textContent = e.message.split('\n')[0]; }
 };
-$('[data-set="proOn"]').addEventListener('change', async e => {
-  if (!e.target.checked) return;
-  if (CAPN) { try { await capPlugin('BackgroundRunner')?.requestPermissions?.({ apis: ['notifications'] }); } catch { } }
-  else if (!DESK && 'Notification' in window && Notification.permission === 'default') { try { await Notification.requestPermission(); } catch { } }
-});
+$('[data-set="proOn"]').addEventListener('change', async e => { if (e.target.checked) { await askNotif(); renderPerm(); } });
+
+/* ───────── 알림 허용 ───────── */
+const NS = () => capPlugin('NativeSettings');
+async function notifState() {
+  if (CAPN) { try { const r = await NS()?.status?.(); if (r) return r; } catch { } return null; }
+  if (DESK) return { notifications: true, battery: true };
+  return 'Notification' in window ? { notifications: Notification.permission === 'granted', battery: true } : null;
+}
+async function askNotif() {
+  try {
+    if (CAPN) {
+      const r = NS() ? await NS().askNotifications() : null;
+      if (!NS()) await capPlugin('BackgroundRunner')?.requestPermissions?.({ apis: ['notifications'] });
+      return r || notifState();
+    }
+    if (!DESK && 'Notification' in window && Notification.permission === 'default') await Notification.requestPermission();
+  } catch (e) { console.warn(e); }
+  return notifState();
+}
+async function renderPerm() {
+  const st = await notifState(), box = $('#permBox');
+  box.hidden = !(CAPN && st);
+  if (box.hidden) return;
+  $('#permNotif').textContent = st.notifications ? '알림: 허용됨' : '알림: 꺼져 있어 선톡이 오지 않습니다';
+  const b = $('#btnPermNotif'); b.textContent = st.notifications ? '알림 설정' : '허용하기';
+  b.onclick = async () => {
+    if (st.notifications) { NS()?.openNotificationSettings(); return; }
+    const r = await askNotif(); if (!r?.notifications) { toast('알림 설정 화면에서 ‘알림 허용’을 켜 주세요.', 5000); NS()?.openNotificationSettings(); } renderPerm();
+  };
+  $('#permBat').textContent = st.battery ? '배터리 절전: 예외로 둠 (선톡이 제때 옴)' : '배터리 절전 때문에 선톡이 늦을 수 있습니다';
+  $('#btnPermBat').hidden = !!st.battery; $('#btnPermBat').onclick = async () => { await NS()?.askBattery(); };
+}
+// 처음 한 번, 선톡을 알림으로 받을지 묻는다 (거절하면 다시 묻지 않고, 설정의 선톡 칸에서 언제든 켤 수 있다)
+async function offerNotif() {
+  if (!CAPN || WIDGET || S.settings.notifAsked || !S.chars.some(c => c.mode !== 'story')) return;
+  const st = await notifState(); if (!st) return;
+  if (st.notifications && S.settings.proOn) return;
+  const card = $('#notifCard'); card.hidden = false; requestAnimationFrame(() => card.classList.add('show'));
+  const close = () => { card.classList.remove('show'); setTimeout(() => { card.hidden = true; }, 260); S.settings.notifAsked = Date.now(); saveSettings(); };
+  $('#btnNotifLater').onclick = close;
+  $('#btnNotifYes').onclick = async () => {
+    const r = await askNotif(); close();
+    if (!r?.notifications) { toast('알림이 꺼져 있습니다. 설정 → 선톡에서 다시 허용할 수 있습니다.', 6000); return; }
+    S.settings.proOn = true; saveSettings();
+    const cs = S.chars.filter(c => c.mode !== 'story'); if (cs.length && !cs.some(c => c.proOn)) { const c = curChar()?.mode !== 'story' ? curChar() : cs[0]; c.proOn = true; c.proNext = null; await DB.put('chars', c); }
+    toast('선톡 알림을 켰습니다. 캐릭터별 횟수는 캐릭터 설정에서 바꿀 수 있습니다.', 5000);
+    if (!r.battery) setTimeout(() => { if (confirm('휴대폰 절전 기능이 앱을 재우면 선톡이 늦게 옵니다. 이 앱을 배터리 최적화에서 제외할까요?')) NS()?.askBattery(); }, 600);
+  };
+}
 
 /* ───────── 안드로이드: 앱을 닫아 둔 동안의 선톡 ─────────
    앱이 뒤로 갈 때 캐릭터별로 지침·최근 대화를 묶어 백그라운드 실행기에 넘기고,
    실행기가 약 15분마다 깨어나 시간이 된 선톡을 직접 만들어 알림을 띄운다. 앱이 다시 열리면 받아 온다. */
 const RUNNER = 'kr.oneonone.chat.pro';
 async function runnerCall(event, details = {}) { const BR = capPlugin('BackgroundRunner'); if (!BR) return null; return BR.dispatchEvent({ label: RUNNER, event, details }); }
-async function pushRunnerCfg() {
-  if (!CAPN) return;
+async function pushRunnerCfg(active = false) {
+  if (!CAPN || WIDGET) return;
   const packs = [];
   if (S.settings.proOn && keyOf()) for (const c of S.chars) {
     if (!c.proOn || c.mode === 'story') continue;
@@ -2557,7 +2884,12 @@ async function pushRunnerCfg() {
       system: withHeader(buildSystem(c, room, tags, msgs)), contents: buildContents(c, room, '{{NOTE}}', msgs, { pro: true }),
       note0: proNote(c, msgs, 0, true, 0), note1: proNote(c, msgs, 0, true, 1) });
   }
-  await runnerCall('setCfg', { cfg: { on: !!S.settings.proOn, active: false, key: keyOf(), quietFrom: Number(S.settings.quietFrom), quietTo: Number(S.settings.quietTo), packs } });
+  await runnerCall('setCfg', { cfg: { on: !!S.settings.proOn, active, key: keyOf(), quietFrom: Number(S.settings.quietFrom), quietTo: Number(S.settings.quietTo), packs } });
+}
+// 선톡 알림을 눌러 들어오면 그 방을 연다
+async function openFromNotif() {
+  let r = null; try { r = await NS()?.takeOpenRoom?.(); } catch { }
+  const id = r?.roomId; if (id && S.rooms.some(x => x.id === id) && id !== S.ui.roomId) await selectRoom(id);
 }
 async function drainRunner() {
   if (!CAPN) return;
@@ -2578,7 +2910,7 @@ if (BC) BC.onmessage = async ({ data }) => {
   if (!data || data.from === TAB) return;
   try {
     if (data.kind === 'settings') { const st = await DB.get('kv', 'settings'); if (st) S.settings = { ...DEFAULTS, ...st, apiKey: cleanKey(st.apiKey) }; renderCost(); renderSound(); return; }
-    if (data.kind === 'chars') { if (S.busy || ($('#dlgChar').open || $('#dlgStory').open)) return; S.chars = (await DB.all('chars')).sort((a, b) => a.createdAt - b.createdAt); if (WIDGET) widgetFixChars(); renderSide(); return; }
+    if (data.kind === 'chars') { if (S.busy || ($('#dlgChar').open || $('#dlgStory').open)) return; S.chars = await loadChars(); if (WIDGET) widgetFixChars(); renderSide(); return; }
     if (data.kind === 'assets') { if (data.id === S.ui.charId && !S.busy && !$('#dlgChar').open && !$('#dlgStory').open) { await loadAssets(data.id); Stage.render(); } return; }
     if (data.kind === 'rooms') { if (!S.busy) { S.rooms = await DB.all('rooms'); renderSide(); updateUnread(); } return; }
     if (data.kind === 'room') {
@@ -2692,7 +3024,7 @@ $('#btnWidgetNew').onclick = async () => {
 };
 
 /* ───────── 업데이트 확인 (GitHub Releases) ───────── */
-const APP_VERSION = '1.1.0';
+const APP_VERSION = '1.2.0';
 const UPDATE_BASE = 'https://raw.githubusercontent.com/harp1455/Chat/main/release/';
 const RELEASES_PAGE = 'https://github.com/harp1455/Chat/releases';
 const verCmp = (a, b) => { const x = String(a).replace(/^v/, '').split('.').map(n => parseInt(n, 10) || 0), y = String(b).replace(/^v/, '').split('.').map(n => parseInt(n, 10) || 0); for (let i = 0; i < 3; i++) if ((x[i] || 0) !== (y[i] || 0)) return (x[i] || 0) - (y[i] || 0); return 0; };
@@ -2793,6 +3125,7 @@ $('#composer').addEventListener('submit', e => {
 });
 $('#btnStop').onclick = stopReply;
 $('#btnEditSave').onclick = async () => { if (!editing) return; const v = $('#editText').value.trim(); if (!v) return; editing.text = v; await DB.put('msgs', editing); editing = null; $('#dlgEdit').close(); renderLog(true); };
+$('#scrim').onclick = () => { document.body.classList.add('side-closed'); S.ui.sideClosed = true; saveUi(); };
 $('#btnSide').onclick = () => { document.body.classList.toggle('side-closed'); S.ui.sideClosed = document.body.classList.contains('side-closed'); saveUi(); };
 $('#btnNewChar').onclick = () => sideTab() === 'story' ? newStory() : newChar(); $('#btnNewChar2').onclick = newChar; $('#btnNewStory2').onclick = newStory;
 for (const b of $$('[data-close]')) b.addEventListener('click', () => b.closest('dialog').close());
@@ -2805,7 +3138,7 @@ for (const b of $$('[data-close]')) b.addEventListener('click', () => b.closest(
   for (const k of ['model', 'summaryModel', 'ttsModel']) S.settings[k] = cleanModel(S.settings[k]);
   fillTtsList(); applyReadScale();
   S.ui = { ...S.ui, ...(await DB.get('kv', 'ui') || {}) };
-  S.chars = (await DB.all('chars')).sort((a, b) => a.createdAt - b.createdAt);
+  S.chars = await loadChars();
   S.rooms = await DB.all('rooms');
   navigator.storage?.persist?.().catch(() => { });
   if (WIDGET) {
@@ -2817,7 +3150,8 @@ for (const b of $$('[data-close]')) b.addEventListener('click', () => b.closest(
   if (CAPN) {
     const App = capPlugin('App');
     App?.addListener('pause', () => { pushRunnerCfg().catch(e => console.warn(e)); });
-    App?.addListener('resume', () => { drainRunner().catch(e => console.warn(e)); runnerCall('setActive', { active: true }).catch(() => { }); clearSeen(); });
+    App?.addListener('resume', () => { drainRunner().then(openFromNotif).catch(e => console.warn(e)); runnerCall('setActive', { active: true }).catch(() => { }); clearSeen(); if ($('#dlgSettings').open) renderPerm(); });
+    setInterval(() => { if (appVisible() && !S.busy) pushRunnerCfg(true).catch(() => { }); }, 3 * 60e3);
     App?.addListener('backButton', () => {
       const d = [...document.querySelectorAll('dialog[open]')].at(-1);
       if (d) d.close(); else if (!document.body.classList.contains('side-closed') && matchMedia('(max-width:880px)').matches) document.body.classList.add('side-closed'); else App.minimizeApp();
@@ -2831,8 +3165,8 @@ for (const b of $$('[data-close]')) b.addEventListener('click', () => b.closest(
   else { S.ui.charId = S.ui.roomId = null; renderAll(); }
   updateUnread();
   setTimeout(() => checkUpdate(false), 15000); setInterval(() => checkUpdate(false), 6 * 3600e3);
-  if (CAPN) { await drainRunner().catch(e => console.warn(e)); runnerCall('setActive', { active: true }).catch(() => { }); }
-  if (S.chars.length && !keyOf()) openSettings();
+  if (CAPN) { await drainRunner().catch(e => console.warn(e)); await openFromNotif(); runnerCall('setActive', { active: true }).catch(() => { }); }
+  if (S.chars.length && !keyOf()) openSettings(); else setTimeout(offerNotif, 2500);
 })();
 </script>
 </body>

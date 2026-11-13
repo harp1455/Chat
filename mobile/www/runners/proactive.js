@@ -34,7 +34,7 @@ function nextTime(p, from, cfg) {
   return Math.round(t);
 }
 function plainBody(text) {
-  return text.split('\n').map(function (l) { return l.replace(/^\s*(?:\[[^\]\n]{1,30}\]|\{[^}\n]{1,60}\})*\s*/, '').replace(/\*\*([^*\n]+)\*\*/g, '$1').trim(); })
+  return text.split('\n').map(function (l) { return l.replace(/^\s*(?:\[[^\]\n]{1,30}\]|\{[^}\n]{1,60}\})*\s*/, '').replace(/\*\*([^*\n]+)\*\*/g, '$1').replace(/\s*<[a-z][a-z -]{1,20}>\s*/gi, ' ').trim(); })
     .filter(function (l) { return l; }).join('\n').slice(0, 300);
 }
 

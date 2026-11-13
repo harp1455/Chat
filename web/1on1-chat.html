@@ -778,6 +778,7 @@ dialog[open]::backdrop{animation:fadein .22s ease}
       <label class="f"><span><b>구글 클라우드 프로젝트 ID</b> (선택) 비워 두면 익스프레스 모드 방식으로 연결합니다. 연결 확인에서 ‘목소리 만들기’가 안 된다고 나올 때 적어 보세요.</span><input type="text" data-set="vertexProject" autocomplete="off" spellcheck="false" placeholder="예: my-project-123456"></label>
       <div class="rowx"><button class="main" id="btnVertexTest">Vertex 연결 확인</button><span class="hint" id="vertexMsg">키, 목소리 모델, 직접 만든 목소리, 목소리 만들기 기능을 차례로 시험합니다.</span></div>
       <ol class="diag" id="vxList" hidden></ol>
+      <div class="rowx" id="vxCopyRow" hidden><button id="btnVxCopy">결과 복사</button><span class="hint">막히면 복사해서 그대로 붙여 넣어 알려 주세요. 키는 들어가지 않습니다.</span></div>
       <p class="hint">직접 만든 목소리는 만든 곳(AI Studio 또는 Vertex)에 저장됩니다. 앱이 목소리마다 Vertex에서 되는지 한 번 시험해 기억해 두고, 안 되는 목소리만 AI Studio로 읽습니다.</p>
     </div>
 
@@ -1416,7 +1417,8 @@ const VERTEX = 'https://aiplatform.googleapis.com/v1/publishers/google/models/';
 const vertexKeyOf = () => cleanKey(S.settings.vertexKey);
 const vertexProject = () => String(S.settings.vertexProject || '').trim();
 // 프로젝트 ID를 적어 두면 프로젝트 경로(global)로, 없으면 익스프레스 모드 경로로 부른다
-const vertexModelUrl = model => 'https://aiplatform.googleapis.com/v1/' + (vertexProject() ? `projects/${encodeURIComponent(vertexProject())}/locations/global/` : '') + 'publishers/google/models/' + encodeURIComponent(model) + ':generateContent';
+let vxNoProject = false; // 프로젝트 경로가 막히고 짧은 경로가 되면, 이번 실행 동안은 짧은 경로로
+const vertexModelUrl = (model, bare = vxNoProject) => 'https://aiplatform.googleapis.com/v1/' + (vertexProject() && !bare ? `projects/${encodeURIComponent(vertexProject())}/locations/global/` : '') + 'publishers/google/models/' + encodeURIComponent(model) + ':generateContent';
 const vertexVoicesUrl = (tail = '') => 'https://aiplatform.googleapis.com/v1beta1/' + (vertexProject() ? `projects/${encodeURIComponent(vertexProject())}/locations/global/` : '') + 'voices' + tail;
 async function vcall(url, { method = 'POST', body, signal } = {}) {
   const key = vertexKeyOf(); if (!key) throw gErr('nokey', 'Vertex AI 키가 없습니다.');
@@ -1432,7 +1434,27 @@ async function vcall(url, { method = 'POST', body, signal } = {}) {
   if (!res.ok) throw await apiError(res);
   return res;
 }
-const vfetch = (model, body, signal) => vcall(vertexModelUrl(model), { body, signal });
+async function vfetch(model, body, signal) {
+  try { return await vcall(vertexModelUrl(model), { body, signal }); }
+  catch (e) {
+    if (!vertexProject() || vxNoProject || !['key', 'model', 'http', 'request'].includes(e.kind)) throw e;
+    const r = await vcall(vertexModelUrl(model, true), { body, signal }).catch(() => null); // 키 방식에 따라 프로젝트 없는 경로만 받는 경우가 있다
+    if (!r) throw e; vxNoProject = true; return r;
+  }
+}
+// Vertex 키 오류를 알기 쉽게: 일반 API 키는 서비스 계정에 묶어야 Vertex가 받아 준다
+function vxWhy(e) {
+  const m = e.raw || e.message || '';
+  if (/CREDENTIALS_MISSING|ACCESS_TOKEN_TYPE_UNSUPPORTED|API_KEY_SERVICE_BLOCKED|Expected OAuth 2 access token|API keys are not supported|UNAUTHENTICATED/i.test(m) || e.code === 401)
+    return '이 키는 Vertex(Agent Platform)용으로 묶여 있지 않습니다. 일반 프로젝트에서는 API 키를 ‘서비스 계정’에 묶어서 만들어야 Vertex가 받아 줍니다.\n'
+      + '1) IAM 및 관리자 → 서비스 계정 → 서비스 계정 만들기: 역할에 ‘Vertex AI Platform Express User’(새 이름: Agent Platform Express User)를 줍니다.\n'
+      + '2) API 및 서비스 → 사용자 인증 정보 → 사용자 인증 정보 만들기 → API 키: ‘서비스 계정을 통해 API 호출 인증’에 체크하고 방금 만든 서비스 계정을 고릅니다.\n'
+      + '3) 그 키를 Vertex AI 키 칸에 넣고 다시 확인합니다.';
+  if (/SERVICE_DISABLED|has not been used in project|is disabled/i.test(m)) return '이 프로젝트에서 Agent Platform API(예전 이름 Vertex AI API)가 꺼져 있습니다. API 및 서비스 → 라이브러리에서 ‘Agent Platform’을 검색해 사용 설정하세요.';
+  if (/PERMISSION_DENIED|does not have|permission/i.test(m) || e.code === 403) return '키는 받아들였지만 권한이 없습니다. 키를 묶은 서비스 계정에 ‘Vertex AI Platform Express User’(또는 Agent Platform User) 역할이 있는지, 위 프로젝트 ID가 키를 만든 프로젝트와 같은지 확인하세요.';
+  if (/billing/i.test(m)) return '이 프로젝트에 결제 계정이 연결되어 있지 않습니다. 결제 메뉴에서 연결하세요.';
+  return '';
+}
 async function apiError(res) {
   let msg = '', status = '', reason = '', retryMs = 0;
   try {
@@ -2813,7 +2835,7 @@ for (const f of $$('[data-set]')) f.addEventListener(f.type === 'checkbox' || f.
   if (k === 'apiKey' || k === 'vertexKey') v = cleanKey(v); else if (/model$/i.test(k)) v = cleanModel(v);
   // Vertex 키를 처음 넣으면 목소리를 Vertex로 보내도록 바꿔 둔다
   if (k === 'vertexKey' && v && !S.settings.vertexKey && S.settings.voiceRoute !== 'vertex') { S.settings.voiceRoute = 'vertex'; const r = $('[data-set="voiceRoute"]'); if (r) r.value = 'vertex'; }
-  S.settings[k] = v; saveSettings(); if (k === 'vertexKey' || k === 'voiceRoute' || k === 'vertexProject' || k === 'vertexTtsModel') Voice.vertexBroken = false;
+  S.settings[k] = v; saveSettings(); if (k === 'vertexKey' || k === 'voiceRoute' || k === 'vertexProject' || k === 'vertexTtsModel') { Voice.vertexBroken = false; vxNoProject = false; }
   if (k === 'vertexKey' || k === 'vertexProject') { for (const v in S.settings.voiceHomes || {}) if (S.settings.voiceHomes[v] === 'studio') delete S.settings.voiceHomes[v]; } // 키나 프로젝트가 바뀌면 다시 시험한다
 });
 $('#btnSettings').onclick = openSettings;
@@ -2964,13 +2986,18 @@ async function diagSteps() {
   Diag.step('결과').set(fails ? 'fail' : 'ok', fails ? `실패 ${fails}건. 위 안내대로 고친 뒤 다시 눌러 보세요.` : '모두 정상입니다. 바로 대화할 수 있습니다.');
 }
 $('#btnDiag').onclick = runDiag;
+$('#btnVxCopy').onclick = async () => {
+  const label = { ok: '정상', warn: '주의', fail: '실패', run: '진행 중' };
+  const txt = [`[Vertex 연결 확인] ${fmtStamp(Date.now())}`, `프로젝트 ID: ${vertexProject() || '(비움)'} / 모델: ${Voice.vertexModel()} / 짧은 경로: ${vxNoProject}`, ...(Diag.vx || []).map(l => `[${label[l.state]}] ${l.title}: ${l.text.replace(/\n/g, ' / ')}`)].join('\n').replace(new RegExp(vertexKeyOf().replace(/[.*+?^${}()|[\]\\]/g, '\\$&') || '^$', 'g'), '(키)');
+  try { await navigator.clipboard.writeText(txt); toast('복사했습니다. 대화창에 붙여 넣어 알려 주세요.'); } catch { const box = $('#diagCopyBox'); box.value = txt; box.hidden = false; toast('자동 복사가 막혀 있습니다.'); }
+};
 async function runVertexDiag(list) {
   const out = [], step = title => {
     const ic = h('span', { class: 'ic', text: '…', 'aria-hidden': 'true' }), dd = h('span', { class: 'dd', text: '확인하는 중…' }), bd = h('div', { class: 'bd' }, h('b', { text: title }), dd), li = h('li', { class: 'dg run' }, ic, bd);
     list?.append(li); const o = { title, state: 'run', text: '' }; out.push(o);
     return { set(state, text, extra) { o.state = state; o.text = text; li.className = 'dg ' + state; ic.textContent = { ok: '✓', warn: '!', fail: '✕' }[state] || '…'; dd.textContent = text; if (extra) bd.append(extra); } }; };
   if (list) { list.textContent = ''; list.hidden = false; }
-  const first = e => e.message.split('\n')[0], why = e => e.kind === 'key' ? 'Vertex AI 키가 올바르지 않거나 권한이 없습니다. 익스프레스 모드 화면의 API 키를 다시 복사해 넣으세요.\n' + e.message
+  const first = e => e.message.split('\n')[0], why = e => vxWhy(e) ? vxWhy(e) + '\n(' + first(e) + ')\n' + (e.raw || '') : e.kind === 'key' ? 'Vertex AI 키가 올바르지 않거나 권한이 없습니다. 키를 다시 복사해 넣으세요.\n' + e.message
     : e.kind === 'tier' || /free.?tier/i.test(e.message) ? 'Vertex 쪽 결제가 연결되어 있지 않아 무료 한도로 처리되고 있습니다. 구글 클라우드 콘솔에서 결제 계정을 연결하세요.\n' + e.message : e.message;
   let s = step('Vertex AI 키');
   const key = vertexKeyOf(); if (!key) { s.set('fail', '키가 비어 있습니다. 위 칸에 Vertex AI 키를 붙여넣으세요.'); return out; }
@@ -2981,7 +3008,7 @@ async function runVertexDiag(list) {
   s = step(`목소리 모델 (${model})`); let baseOk = false;
   try { const t0 = performance.now(); const url = await Voice.synthVertex({ voice: 'Kore' }, '안녕하세요. 목소리 시험입니다.', '', cost); baseOk = !!url;
     s.set('ok', `정상입니다. (${((performance.now() - t0) / 1000).toFixed(1)}초)`, h('div', { class: 'rowx' }, h('button', { type: 'button', onclick: () => Voice.play(url) }, '들어 보기'))); }
-  catch (e) { s.set('fail', e.kind === 'model' ? `Vertex에 ‘${model}’ 모델이 없습니다. Vertex AI 스튜디오에서 쓸 수 있는 목소리(TTS) 모델 이름을 확인해 ‘Vertex 목소리 모델’ 칸에 적어 주세요.\n${first(e)}` : why(e)); }
+  catch (e) { s.set('fail', e.kind === 'model' && !vxWhy(e) ? `Vertex에 ‘${model}’ 모델이 없습니다. Vertex AI 스튜디오에서 쓸 수 있는 목소리(TTS) 모델 이름을 확인해 ‘Vertex 목소리 모델’ 칸에 적어 주세요.\n${first(e)}` : why(e)); }
   if (!baseOk) { step('결과').set('fail', '목소리 모델이 동작하지 않아 나머지 시험은 건너뜁니다. 위 안내대로 고친 뒤 다시 눌러 보세요.'); return out; }
   // 2. 직접 만든 목소리가 Vertex에서도 되는지
   const customs = new Map();
@@ -3010,7 +3037,7 @@ async function runVertexDiag(list) {
   S.settings.vertexDesign = designOk; saveSettings();
   return out;
 }
-$('#btnVertexTest').onclick = async () => { const b = $('#btnVertexTest'), m = $('#vertexMsg'); b.disabled = true; m.textContent = '시험하는 중…'; try { await runVertexDiag($('#vxList')); m.textContent = ''; } catch (e) { m.textContent = e.message.split('\n')[0]; } b.disabled = false; };
+$('#btnVertexTest').onclick = async () => { const b = $('#btnVertexTest'), m = $('#vertexMsg'); b.disabled = true; m.textContent = '시험하는 중…'; try { Diag.vx = await runVertexDiag($('#vxList')); m.textContent = ''; $('#vxCopyRow').hidden = false; } catch (e) { m.textContent = e.message.split('\n')[0]; } b.disabled = false; };
 $('#modelQuick').addEventListener('change', e => { S.settings.model = e.target.value; saveSettings(); refreshEstimate(true); });
 $('#btnImgMode').onclick = () => {
   const c = curChar(); if (!c) return;
@@ -3434,7 +3461,7 @@ $('#btnWidgetNew').onclick = async () => {
 };
 
 /* ───────── 업데이트 확인 (GitHub Releases) ───────── */
-const APP_VERSION = '1.6.0';
+const APP_VERSION = '1.6.1';
 const UPDATE_BASE = 'https://raw.githubusercontent.com/harp1455/Chat/main/release/';
 const RELEASES_PAGE = 'https://github.com/harp1455/Chat/releases';
 const verCmp = (a, b) => { const x = String(a).replace(/^v/, '').split('.').map(n => parseInt(n, 10) || 0), y = String(b).replace(/^v/, '').split('.').map(n => parseInt(n, 10) || 0); for (let i = 0; i < 3; i++) if ((x[i] || 0) !== (y[i] || 0)) return (x[i] || 0) - (y[i] || 0); return 0; };

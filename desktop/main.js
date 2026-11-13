@@ -187,6 +187,50 @@ ipcMain.handle('apply-update', (e, o) => applyUpdate(o || {}));
 ipcMain.handle('shell-version', () => app.getVersion());
 ipcMain.handle('set-autostart', (e, on) => setAutostart(on));
 
+/* ───── 구글 로그인 (목소리 만들기용) ─────
+   설치형 앱 방식: 기본 브라우저로 구글 로그인 창을 열고, 이 컴퓨터 안(127.0.0.1)에서만 결과를 받는다. */
+const http = require('http');
+const crypto = require('crypto');
+const b64url = b => b.toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+async function tokenRequest(form) {
+  const res = await net.fetch('https://oauth2.googleapis.com/token', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams(form).toString() });
+  const j = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(j.error_description || j.error || `HTTP ${res.status}`);
+  return j;
+}
+ipcMain.handle('google-login', async (e, o) => {
+  const clientId = String(o?.clientId || ''), clientSecret = String(o?.clientSecret || '');
+  if (!/\.apps\.googleusercontent\.com$/.test(clientId)) throw new Error('OAuth 클라이언트 ID가 올바르지 않습니다.');
+  const verifier = b64url(crypto.randomBytes(48)), challenge = b64url(crypto.createHash('sha256').update(verifier).digest()), stateTok = b64url(crypto.randomBytes(16));
+  let server;
+  const code = await new Promise((resolve, reject) => {
+    const timer = setTimeout(() => { reject(new Error('5분 안에 로그인이 끝나지 않아 취소했습니다.')); server?.close(); }, 5 * 60 * 1000);
+    server = http.createServer((req, res) => {
+      const u = new URL(req.url, 'http://127.0.0.1');
+      if (u.pathname !== '/') { res.writeHead(404); res.end(); return; }
+      const ok = u.searchParams.get('code') && u.searchParams.get('state') === stateTok;
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+      res.end(`<!doctype html><meta charset="utf-8"><title>1대1채팅</title><body style="font-family:sans-serif;padding:40px;background:#14171f;color:#eee"><h2>${ok ? '로그인했습니다.' : '로그인하지 못했습니다.'}</h2><p>이 창을 닫고 1대1채팅 앱으로 돌아가세요.</p></body>`);
+      clearTimeout(timer); server.close();
+      if (ok) resolve(u.searchParams.get('code')); else reject(new Error(u.searchParams.get('error') === 'access_denied' ? '로그인 화면에서 허용하지 않았거나, 이 계정이 테스트 사용자에 없습니다.' : (u.searchParams.get('error') || '로그인 결과를 받지 못했습니다.')));
+    });
+    server.listen(0, '127.0.0.1', () => {
+      const redirect = `http://127.0.0.1:${server.address().port}`;
+      server._redirect = redirect;
+      const q = new URLSearchParams({ client_id: clientId, redirect_uri: redirect, response_type: 'code', scope: 'https://www.googleapis.com/auth/cloud-platform openid email', code_challenge: challenge, code_challenge_method: 'S256', access_type: 'offline', prompt: 'consent', state: stateTok });
+      shell.openExternal('https://accounts.google.com/o/oauth2/v2/auth?' + q);
+    });
+  });
+  const t = await tokenRequest({ code, client_id: clientId, client_secret: clientSecret, redirect_uri: server._redirect, grant_type: 'authorization_code', code_verifier: verifier });
+  let email = '';
+  try { email = JSON.parse(Buffer.from(String(t.id_token || '').split('.')[1] || '', 'base64').toString()).email || ''; } catch { }
+  return { access: t.access_token, refresh: t.refresh_token || '', exp: Date.now() + (Number(t.expires_in) || 3600) * 1000, email };
+});
+ipcMain.handle('google-refresh', async (e, o) => {
+  const t = await tokenRequest({ refresh_token: String(o?.refresh || ''), client_id: String(o?.clientId || ''), client_secret: String(o?.clientSecret || ''), grant_type: 'refresh_token' });
+  return { access: t.access_token, exp: Date.now() + (Number(t.expires_in) || 3600) * 1000 };
+});
+
 /* ───── 시작 ───── */
 app.on('second-instance', () => showMain());
 app.on('before-quit', () => { quitting = true; });

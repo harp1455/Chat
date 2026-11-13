@@ -17,6 +17,8 @@ contextBridge.exposeInMainWorld('desktop', {
   setAutostart: on => ipcRenderer.invoke('set-autostart', !!on),
   applyUpdate: o => ipcRenderer.invoke('apply-update', { version: String(o?.version || ''), htmlUrl: String(o?.htmlUrl || ''), minShell: String(o?.minShell || '') }),
   shellVersion: () => ipcRenderer.invoke('shell-version'),
+  googleLogin: o => ipcRenderer.invoke('google-login', { clientId: String(o?.clientId || ''), clientSecret: String(o?.clientSecret || '') }),
+  googleRefresh: o => ipcRenderer.invoke('google-refresh', { refresh: String(o?.refresh || ''), clientId: String(o?.clientId || ''), clientSecret: String(o?.clientSecret || '') }),
   onOpenRoom: cb => ipcRenderer.on('open-room', (_, id) => cb(id)),
   onResume: cb => ipcRenderer.on('resumed', () => cb()),
 });

@@ -1,3 +1,5 @@
+// 조절 가능한 안전 필터는 끄고 보낸다 (구글 고정 정책은 그대로)
+var SAFETY = ['HARM_CATEGORY_HARASSMENT', 'HARM_CATEGORY_HATE_SPEECH', 'HARM_CATEGORY_SEXUALLY_EXPLICIT', 'HARM_CATEGORY_DANGEROUS_CONTENT'].map(function (c) { return { category: c, threshold: 'BLOCK_NONE' }; });
 // 안드로이드 백그라운드 실행기: 앱이 닫혀 있는 동안 약 15분마다 깨어나 시간이 된 선톡을 보낸다.
 // 앱은 뒤로 갈 때 setCfg로 캐릭터별 지침·최근 대화(packs)를 넘기고, 다시 열릴 때 drain으로 받은 메시지를 가져간다.
 // (웹뷰 밖의 별도 실행 환경이라 화면 기능은 쓸 수 없다. 최신 문법은 피해서 쓴다.)
@@ -75,8 +77,9 @@ addEventListener('checkIn', async function (resolve, reject) {
       var res = await fetch('https://generativelanguage.googleapis.com/v1beta/models/' + encodeURIComponent(p.model) + ':generateContent', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-goog-api-key': cfg.key },
-        body: JSON.stringify({ systemInstruction: { parts: [{ text: p.system }] }, contents: contents, generationConfig: p.gen || {} }),
+        body: JSON.stringify({ systemInstruction: { parts: [{ text: p.system }] }, contents: contents, generationConfig: p.gen || {}, safetySettings: SAFETY }),
       });
+      if (res.status === 400 && SAFETY.length) { SAFETY = []; p.next = now; st.note = '안전 설정을 받지 않는 모델이라 빼고 다시 시도'; continue; }
       if (!res.ok) { p.next = now + 30 * 60e3; st.note = '구글 요청 실패 (' + res.status + ')'; continue; }
       var j = await res.json();
       var parts = (j && j.candidates && j.candidates[0] && j.candidates[0].content && j.candidates[0].content.parts) || [];

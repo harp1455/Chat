@@ -770,6 +770,7 @@ dialog[open]::backdrop{animation:fadein .22s ease}
     <div class="permbox" id="permBox" hidden>
       <div class="rowx"><span id="permNotif"></span><button id="btnPermNotif" class="small"></button></div>
       <div class="rowx" id="permBatRow"><span id="permBat"></span><button id="btnPermBat" class="small">제외하기</button></div>
+      <div class="rowx"><span id="permRun" style="flex:1"></span><button id="btnNotifTest" class="small">알림 시험</button></div>
     </div>
     <label class="c" id="autostartRow" hidden><input type="checkbox" id="autostart"> 컴퓨터를 켜면 자동으로 실행 (창 없이 트레이에서 시작)</label>
     <div class="rowx"><button id="btnProTest">지금 선톡 받아 보기</button><span class="hint" id="proMsg"></span></div>
@@ -3507,6 +3508,10 @@ async function charIcon(c) {
 async function notifyPro(c, room, m) {
   const body = plainOf(m, c.name).replace(/ \/ /g, '\n').slice(0, 240);
   if (DESK) { DESK.notify({ title: c.name, body, roomId: room.id, icon: await charIcon(c) }); return; }
+  if (CAPN) { // 휴대폰: 앱이 뒤에 있으면 카톡처럼 알림으로, 보고 있으면 화면 안 알림으로
+    if (!appVisible()) { try { const r = await NS()?.notifyMessage?.({ title: c.name, body, roomId: room.id }); if (r?.shown) { pushRunnerCfg(false).catch(() => { }); return; } } catch (e) { console.warn(e); } }
+    toast(`${c.name}: ${body.split('\n')[0]}`, 6000); return;
+  }
   if (!CAPN && 'Notification' in window && Notification.permission === 'granted') {
     const n = new Notification(c.name, { body }); n.onclick = () => { window.focus(); selectRoom(room.id); }; return;
   }
@@ -3577,6 +3582,12 @@ async function renderPerm() {
   };
   $('#permBat').textContent = st.battery ? '배터리 절전: 예외로 둠 (선톡이 제때 옴)' : '배터리 절전 때문에 선톡이 늦을 수 있습니다';
   $('#btnPermBat').hidden = !!st.battery; $('#btnPermBat').onclick = async () => { await NS()?.askBattery(); };
+  const rs = S.runnerStat;
+  $('#permRun').textContent = rs?.at ? `앱이 꺼진 동안의 마지막 확인: ${fmtStamp(rs.at)} — ${rs.note || ''}${rs.sent ? ` (지금까지 ${rs.sent}번 보냄)` : ''}` : '앱이 꺼진 동안의 확인 기록이 아직 없습니다. 앱을 닫고 20분쯤 지난 뒤 다시 열어 보면 여기에 나옵니다.';
+  $('#btnNotifTest').onclick = async () => {
+    const c = curChar() || S.chars[0]; toast('5초 뒤에 알림을 보냅니다. 지금 홈 화면으로 나가 보세요.', 4500);
+    setTimeout(async () => { try { const r = await NS()?.notifyMessage({ title: c?.name || '1대1채팅', body: '알림 시험이에요. 이렇게 도착해요.', roomId: curRoom()?.id || '' }); if (!r?.shown) toast('알림이 꺼져 있습니다. 위의 ‘허용하기’를 눌러 주세요.', 6000); } catch (e) { toast('알림을 띄우지 못했습니다. 앱을 최신 버전으로 설치해 주세요.', 6000); } }, 5000);
+  };
 }
 // 처음 한 번, 선톡을 알림으로 받을지 묻는다 (거절하면 다시 묻지 않고, 설정의 선톡 칸에서 언제든 켤 수 있다)
 async function offerNotif() {
@@ -3625,6 +3636,7 @@ async function openFromNotif() {
 async function drainRunner() {
   if (!CAPN) return;
   let r = null; try { r = await runnerCall('drain'); } catch (e) { console.warn(e); }
+  if (r?.stat) S.runnerStat = r.stat;
   for (const p of r?.packs || []) { const c = S.chars.find(x => x.id === p.charId); if (c && p.next && p.next !== c.proNext) { c.proNext = p.next; await DB.put('chars', c); } }
   let lastRoom = null;
   for (const it of r?.inbox || []) {
@@ -3755,7 +3767,7 @@ $('#btnWidgetNew').onclick = async () => {
 };
 
 /* ───────── 업데이트 확인 (GitHub Releases) ───────── */
-const APP_VERSION = '1.10.0';
+const APP_VERSION = '1.10.1';
 const UPDATE_BASE = 'https://raw.githubusercontent.com/harp1455/Chat/main/release/';
 const RELEASES_PAGE = 'https://github.com/harp1455/Chat/releases';
 const verCmp = (a, b) => { const x = String(a).replace(/^v/, '').split('.').map(n => parseInt(n, 10) || 0), y = String(b).replace(/^v/, '').split('.').map(n => parseInt(n, 10) || 0); for (let i = 0; i < 3; i++) if ((x[i] || 0) !== (y[i] || 0)) return (x[i] || 0) - (y[i] || 0); return 0; };
@@ -3887,6 +3899,7 @@ for (const b of $$('[data-close]')) b.addEventListener('click', () => b.closest(
     App?.addListener('pause', () => { pushRunnerCfg().catch(e => console.warn(e)); });
     App?.addListener('resume', () => { drainRunner().then(openFromNotif).catch(e => console.warn(e)); runnerCall('setActive', { active: true }).catch(() => { }); clearSeen(); if ($('#dlgSettings').open) renderPerm(); });
     setInterval(() => { if (appVisible() && !S.busy) pushRunnerCfg(true).catch(() => { }); }, 3 * 60e3);
+    setInterval(() => { if (appVisible()) runnerCall('setActive', { active: true }).catch(() => { }); }, 60e3);
     App?.addListener('backButton', () => {
       const d = [...document.querySelectorAll('dialog[open]')].at(-1);
       if (d) d.close(); else if (!document.body.classList.contains('side-closed') && matchMedia('(max-width:880px)').matches) document.body.classList.add('side-closed'); else App.minimizeApp();

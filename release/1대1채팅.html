@@ -759,6 +759,10 @@ dialog[open]::backdrop{animation:fadein .22s ease}
       <label class="f"><span><b>음량</b></span><input type="range" min="0" max="1" step="0.05" data-set="volume" data-num></label>
     </div>
     <datalist id="ttsList"><option value="gemini-3.8-flash-tts"><option value="gemini-3.8-flash-lite-tts"></datalist>
+    <label class="c"><input type="checkbox" data-set="voiceSave"> 목소리 요청 아끼기: 응답 하나를 한 번에 만듭니다</label>
+    <p class="hint">구글은 목소리 모델에 하루 요청 수 한도를 따로 둡니다(잔액과 별개). 켜 두면 대사 한 줄마다가 아니라 응답 하나마다 한 번만 요청해서 같은 한도로 몇 배 오래 쓸 수 있습니다. 대신 글과 목소리를 줄마다 맞춰 읽지는 않습니다.</p>
+    <label class="c"><input type="checkbox" data-set="ttsFallback"> 하루 한도가 차면 가벼운 목소리 모델(gemini-3.8-flash-lite-tts)로 바꿔서 계속 읽기</label>
+    <p class="hint" id="ttsLimitInfo"></p>
 
     <h3>업데이트</h3>
     <p class="hint" id="verInfo"></p>
@@ -1079,7 +1083,7 @@ function defaultPrices() {
 }
 const DEFAULTS = { ...PROMPT_DEFAULTS, readScale: 1, proOn: false, quietFrom: 1, quietTo: 9, fx: 1340, prices: null, pricesAuto: true, balance: null, spentAll: 0, kbMax: 3, kbScan: 2, autoCount: 10, autoMode: 'ai', autoText: '계속', apiKey: '', model: 'gemini-4-argon', summaryModel: '', thinkingLevel: 'low', speed: 1,
   keepRecent: 80, chunkSize: 40, diaryBudget: 30000, nudgeMin: 0, showUsage: true,
-  ttsModel: 'gemini-3.8-flash-tts', volume: 0.9, voiceOn: true, models: [] };
+  ttsModel: 'gemini-3.8-flash-tts', volume: 0.9, voiceOn: true, voiceSave: true, ttsFallback: true, models: [] };
 const S = { settings: { ...DEFAULTS }, ui: { charId: null, roomId: null, sideClosed: false }, chars: [], rooms: [], msgs: [], assets: [],
   busy: false, abort: null, pending: null, auto: null, summarizing: false, showAll: false, nudged: {}, nudgeTimer: null, lastTs: 0 };
 const curChar = () => S.chars.find(c => c.id === S.ui.charId) || null;
@@ -1618,6 +1622,16 @@ function storySegs(char, body, final = true) {
   return out;
 }
 const segSynth = (sg, onCost) => Voice.synth({ voice: sg.voice, voiceStyle: sg.style }, sg.text, '', onCost);
+const TTS_LITE = 'gemini-3.8-flash-lite-tts';
+function nextPacificMidnight(now = Date.now()) {
+  const p = Object.fromEntries(new Intl.DateTimeFormat('en-US', { timeZone: 'America/Los_Angeles', hourCycle: 'h23', hour: 'numeric', minute: 'numeric', second: 'numeric' }).formatToParts(new Date(now)).map(x => [x.type, Number(x.value)]));
+  return now + ((24 - p.hour) * 3600 - p.minute * 60 - p.second) * 1000 + 30000;
+}
+const fmtClock = t => { const d = new Date(t), same = d.toDateString() === new Date().toDateString(); return (same ? '오늘 ' : '내일 ') + d.toLocaleTimeString('ko-KR', { hour: 'numeric', minute: '2-digit' }); };
+// 응답 하나를 한 번에 읽을 때 쓸 말투: 가장 많이 나온 것
+const topStyle = list => { const n = {}; for (const x of list) if ((x || '').trim()) n[x] = (n[x] || 0) + 1; return Object.keys(n).sort((a, b) => n[b] - n[a])[0] || ''; };
+// 같은 목소리가 이어지는 대사는 한 요청으로 합친다
+const mergeSegs = segs => segs.reduce((o, sg) => { const l = o[o.length - 1]; if (l && l.voice === sg.voice && l.style === sg.style) l.text += '\n' + sg.text; else o.push({ ...sg }); return o; }, []);
 const Voice = {
   cache: new Map(), audio: null, warned: false,
   has(char) { return !!char && (char.mode === 'story' ? storyVoices(char).length > 0 || !!(char.narrVoice || '').trim() : !!(char.voice || '').trim()); },
@@ -1626,16 +1640,32 @@ const Voice = {
     return text.replace(/\*\*([^*\n]+)\*\*/g, '$1').replace(/~~([^~\n]+)~~/g, '$1').replace(/`([^`\n]+)`/g, '$1')
       .replace(/\*[^*\n]+\*/g, ' ').replace(/\s+/g, ' ').trim();
   },
+  // 하루 한도: 구글 목소리 모델은 잔액과 별개로 하루 요청 수 한도가 있다(태평양 시간 자정에 초기화)
+  model() { const m = cleanModel(S.settings.ttsModel) || DEFAULTS.ttsModel; return S.settings.ttsFallback !== false && (S.settings.ttsLiteUntil || 0) > Date.now() && m !== TTS_LITE ? TTS_LITE : m; },
+  blocked() { return (S.settings.ttsBlockedUntil || 0) > Date.now(); },
+  isDaily: e => e?.kind === 'daily' || ((e?.kind === 'quota' || e?.kind === 'tier') && (e.retryMs || 0) > 3600e3),
+  hitDaily(model) {
+    const until = nextPacificMidnight(), at = fmtClock(until);
+    if (S.settings.ttsFallback !== false && model !== TTS_LITE && !((S.settings.ttsLiteUntil || 0) > Date.now())) {
+      S.settings.ttsLiteUntil = until; saveSettings(); toast(`오늘 목소리 한도를 다 써서 가벼운 목소리 모델로 바꿔 읽습니다. ${at}에 원래 모델로 돌아갑니다.`, 7000); return true;
+    }
+    S.settings.ttsBlockedUntil = until; saveSettings();
+    toast(`오늘 쓸 수 있는 목소리 요청을 모두 썼습니다(구글의 하루 한도, 잔액과 별개). ${at}에 다시 읽을 수 있습니다. 그때까지는 글로만 이어집니다.`, 9000);
+    return false;
+  },
   async synth(char, text, style, onCost) {
     const say = Voice.speakable(text); if (!say) return null;
     const st = [char.voiceStyle, style].map(x => (x || '').trim()).filter(Boolean).join(', ');
-    const key = [S.settings.ttsModel, char.voice, st, say].join('|');
+    const model = Voice.model(), key = [model, char.voice, st, say].join('|');
     if (Voice.cache.has(key)) return Voice.cache.get(key);
     if (Voice.pending.has(key)) return Voice.pending.get(key);
+    if (Voice.blocked()) return null;
     const part = { text: say }; if (st) part.speech_metadata = { style: st };
-    const job = Voice.queue(() => withRetry(() => gfetch('models/' + encodeURIComponent(cleanModel(S.settings.ttsModel) || DEFAULTS.ttsModel) + ':generateContent', { method: 'POST',
+    const job = Voice.queue(() => withRetry(() => gfetch('models/' + encodeURIComponent(model) + ':generateContent', { method: 'POST',
       body: { contents: [{ role: 'user', parts: [part] }], generationConfig: { responseModalities: ['AUDIO'], speechConfig: { voiceConfig: { voice: char.voice.trim() } } } } }), { tries: 4 }))
-      .then(res => res.json()).then(j => Voice.finish(j, key, say, onCost)).finally(() => Voice.pending.delete(key));
+      .then(res => res.json()).then(j => Voice.finish(j, key, say, onCost, model))
+      .catch(e => { if (!Voice.isDaily(e)) throw e; Voice.pending.delete(key); return Voice.hitDaily(model) ? Voice.synth(char, text, style, onCost) : null; })
+      .finally(() => Voice.pending.delete(key));
     Voice.pending.set(key, job);
     return job;
   },
@@ -1648,12 +1678,12 @@ const Voice = {
       Voice.running < 2 ? go() : Voice.waiting.push(go);
     });
   },
-  finish(j, key, say, onCost) {
+  finish(j, key, say, onCost, model = S.settings.ttsModel) {
     const inl = (j.candidates?.[0]?.content?.parts || []).map(p => p.inlineData || p.inline_data).find(Boolean);
     if (!inl?.data) throw new Error('음성 데이터가 비어 있습니다.');
     // 사용량이 안 오면 음성 길이로 계산한다 (24kHz·16비트 = 초당 48,000바이트, 오디오는 초당 25토큰)
     const u = usageOf(j.usageMetadata) || { p: Math.ceil(say.length / 1.6), c: 0, o: Math.ceil(inl.data.length * 0.75 / 48000 * 25) };
-    const usd = costOf(S.settings.ttsModel || DEFAULTS.ttsModel, u);
+    const usd = costOf(model || DEFAULTS.ttsModel, u);
     if (onCost && usd) onCost(usd);
     const url = Voice.toUrl(inl.data);
     Voice.cache.set(key, url);
@@ -2060,10 +2090,15 @@ async function generateReply(extraNote) {
   const vCost = { usd: 0, jobs: [] }; let saved = null;
   // 목소리: 준비된 대사는 글과 맞춰 읽고, 늦어지면 글을 먼저 보여 준 뒤 목소리는 도착하는 대로 차례로 읽는다
   const gen = ++Voice.gen; Voice.stop(); let synced = true, playChain = Promise.resolve();
-  const VOICE_WAIT = 4000;
+  const VOICE_WAIT = 4000, save = S.settings.voiceSave !== false, bulk = [];
+  const sayBulk = () => { // 아끼기: 이 응답의 대사를 한 번에 만들어 읽는다
+    if (!bulk.length) return;
+    const job = Voice.synth(char, bulk.map(p => p.text).join('\n'), topStyle(bulk.map(p => p.style)), onVoice).catch(e => { Voice.fail(e); return null; }); vCost.jobs.push(job);
+    playChain = playChain.then(async () => { const url = await Promise.race([job, sleep(90000).then(() => null)]); if (url && Voice.gen === gen && S.ui.roomId === roomId) { Stage.talk(); await Voice.play(url); } });
+  };
   let spoken = 0; // 스토리챗: 줄이 완성되는 대로 대사를 인물 목소리로 읽는다
   const speakNew = final => {
-    const segs = storySegs(char, splitStory(acc, tags, true).body, final);
+    let segs = storySegs(char, splitStory(acc, tags, true).body, final); if (save) segs = mergeSegs(segs);
     for (; spoken < segs.length; spoken++) {
       const job = segSynth(segs[spoken], onVoice).catch(e => { Voice.fail(e); return null; }); vCost.jobs.push(job);
       playChain = playChain.then(async () => { const url = await Promise.race([job, sleep(90000).then(() => null)]); if (url && Voice.gen === gen && S.ui.roomId === roomId) { await Voice.play(url); await sleep(90); } });
@@ -2082,7 +2117,8 @@ async function generateReply(extraNote) {
   const pushLine = raw => {
     const p = parseLine(raw, tags, char.name); if (!p) return;
     p.raw = raw.trim();
-    if (voice && p.text) {
+    if (voice && p.text && save) bulk.push(p);
+    else if (voice && p.text) {
       p.audio = Voice.synth(char, p.text, p.style, onVoice).catch(e => { Voice.fail(e); return null; }); vCost.jobs.push(p.audio);
       p.played = playChain = playChain.then(async () => {
         const url = await Promise.race([p.audio, sleep(90000).then(() => null)]);
@@ -2123,10 +2159,10 @@ async function generateReply(extraNote) {
           if (!storyEl.isConnected) { group.append(storyEl); typing.remove(); }
           storyEl.replaceChildren(mdBlock(sp.body, { img: imgModeOf(char) === 'inline' ? 'show' : 'hide', streaming: true })); if (near) toBottom();
         }
-        if (voice) speakNew(false);
+        if (voice && !save) speakNew(false);
       } else { let i; while ((i = acc.indexOf('\n', pos)) >= 0) { pushLine(acc.slice(pos, i)); pos = i + 1; } }
     }
-    if (!story) pushLine(acc.slice(pos)); else if (voice) speakNew(true);
+    if (!story) { pushLine(acc.slice(pos)); if (voice) sayBulk(); } else if (voice) speakNew(true);
   } catch (e) { if (e.name !== 'AbortError') err = e; }
   streamDone = true; await pump;
   if (story && acc.trim()) revealed.push(acc.trim());
@@ -2188,12 +2224,20 @@ async function speakMsg(m) {
   const onCost = usd => { spend(m.roomId, 'voice', usd); m.cost = { ...m.cost, voice: (m.cost?.voice || 0) + usd }; DB.put('msgs', m); };
   if (char.mode === 'story') {
     const gen = ++Voice.gen; Voice.stop();
-    const jobs = storySegs(char, splitStory(m.text, Stage.tags()).body).map(sg => segSynth(sg, onCost).catch(e => { Voice.fail(e); return null; }));
+    let segs = storySegs(char, splitStory(m.text, Stage.tags()).body); if (S.settings.voiceSave !== false) segs = mergeSegs(segs);
+    const jobs = segs.map(sg => segSynth(sg, onCost).catch(e => { Voice.fail(e); return null; }));
     if (!jobs.length) toast('읽을 대사를 찾지 못했습니다. 스토리 설정의 ‘목소리’ 탭에서 인물 이름을 확인하세요.', 5000);
     for (const j of jobs) { const url = await j; if (Voice.gen !== gen) break; if (url) await Voice.play(url); }
     if (!S.busy) renderLog(true); return;
   }
-  for (const p of parseText(m.text, Stage.tags(), char.name)) {
+  const parts = parseText(m.text, Stage.tags(), char.name);
+  if (S.settings.voiceSave !== false) {
+    const lines = parts.filter(p => p.text); const emo = parts.find(p => p.emo)?.emo; if (emo) Stage.setEmotion(emo);
+    try { const url = await Voice.synth(char, lines.map(p => p.text).join('\n'), topStyle(lines.map(p => p.style)), usd => { spend(m.roomId, 'voice', usd); m.cost = { ...m.cost, voice: (m.cost?.voice || 0) + usd }; DB.put('msgs', m); }); if (url) { Stage.talk(); await Voice.play(url); } }
+    catch (e) { Voice.fail(e); }
+    if (!S.busy) renderLog(true); return;
+  }
+  for (const p of parts) {
     if (p.emo) Stage.setEmotion(p.emo);
     if (!p.text) continue;
     try {
@@ -2680,6 +2724,7 @@ $('#btnPromptReset').onclick = () => {
 function openSettings() {
   fillSetFields();
   $('#proHint').textContent = proHintText(); $('#proMsg').textContent = ''; renderPerm();
+  $('#ttsLimitInfo').textContent = Voice.blocked() ? `오늘 목소리 한도를 다 썼습니다. ${fmtClock(S.settings.ttsBlockedUntil)}에 다시 읽을 수 있습니다.` : (S.settings.ttsLiteUntil || 0) > Date.now() ? `오늘 한도가 차서 가벼운 모델로 읽는 중입니다. ${fmtClock(S.settings.ttsLiteUntil)}에 원래 모델로 돌아갑니다.` : '';
   $('#verInfo').textContent = `지금 버전: v${APP_VERSION} (${platformName()}). 시작할 때와 6시간마다 새 버전이 있는지 자동으로 확인합니다.`; $('#updMsg').textContent = '';
   $('#autostartRow').hidden = !DESK;
   if (DESK) DESK.getAutostart().then(v => { $('#autostart').checked = !!v; }).catch(() => { });
@@ -3269,7 +3314,7 @@ $('#btnWidgetNew').onclick = async () => {
 };
 
 /* ───────── 업데이트 확인 (GitHub Releases) ───────── */
-const APP_VERSION = '1.3.1';
+const APP_VERSION = '1.4.0';
 const UPDATE_BASE = 'https://raw.githubusercontent.com/harp1455/Chat/main/release/';
 const RELEASES_PAGE = 'https://github.com/harp1455/Chat/releases';
 const verCmp = (a, b) => { const x = String(a).replace(/^v/, '').split('.').map(n => parseInt(n, 10) || 0), y = String(b).replace(/^v/, '').split('.').map(n => parseInt(n, 10) || 0); for (let i = 0; i < 3; i++) if ((x[i] || 0) !== (y[i] || 0)) return (x[i] || 0) - (y[i] || 0); return 0; };

@@ -1247,8 +1247,14 @@ async function loadAssets(charId) {
 
 /* ───────── 대사 해석 ───────── */
 // 한 줄 = 말풍선 하나.  [표정]{연기 지시} 대사
+// 모델이 줄을 쓰다가 스스로 고친 흔적: "초안 (Note: …) -> 고친 줄" 꼴이면 고친 줄만 남기고, 남은 영어 메모도 지운다
+function dropSelfFix(line) {
+  const m = line.match(/^.*\(\s*(?:note|notes|correction|fix|edit|참고|수정|메모)\s*[:：][^)]*\)\s*(?:->|→|=>|⇒)\s*(.+)$/i);
+  if (m) line = m[1];
+  return line.replace(/\(\s*(?:note|notes|correction)\s*[:：][^)]*\)/gi, '').trim();
+}
 function parseLine(raw, tags, name) {
-  let line = raw.trim();
+  let line = dropSelfFix(raw.trim());
   if (!line || line.startsWith('⏱') || /^\(시스템\s*[:：]/.test(line)) return null;
   let emo = null, style = null, m;
   for (let i = 0; i < 4; i++) {
@@ -1317,9 +1323,10 @@ function formatLines(tags, voice, story) {
     return L.join('\n');
   }
   if (tags.length) L.push(`- 각 줄 맨 앞에 그 순간의 표정을 [태그]로 붙인다. 쓸 수 있는 태그: ${tags.join(', ')}`, '- 목록에 없는 태그는 쓰지 않는다.');
-  if (voice) L.push('- ' + (tags.length ? '표정 태그 바로 뒤' : '각 줄 맨 앞') + '에 그 줄을 어떤 목소리 연기로 말할지 {중괄호} 안에 적는다. 그 순간의 감정, 호흡, 속도, 크기를 구체적으로, 짧은 영어 구로 쓴다. 예) {breathless, low whisper} {teasing, slow and soft} {trembling, holding back} {flat, sleepy}. 매 줄 같은 지시를 되풀이하지 말고 그 줄의 상태에 맞춘다. 이 부분은 음성 합성에만 쓰이고 상대에게 보이지 않는다.',
+  if (voice) L.push('- ' + (tags.length ? '표정 태그 바로 뒤' : '각 줄 맨 앞') + '에 그 줄을 어떤 목소리 연기로 말할지 {중괄호} 안에 적는다. 그 순간의 감정, 호흡, 속도, 크기를 구체적으로, 짧은 한국어 구로 쓴다. 예) {숨이 차서 낮게 속삭이듯} {놀리듯 느리고 부드럽게} {떨리는 목소리로 참으며} {졸린 듯 무덤덤하게}. 매 줄 같은 지시를 되풀이하지 말고 그 줄의 상태에 맞춘다. 이 부분은 음성 합성에만 쓰이고 상대에게 보이지 않는다.',
     '- 대사는 소리 내어 읽힌다. 국어책 읽듯 매끈한 문장으로 쓰지 말고 실제로 말하듯 쓴다: 숨을 고르거나 말을 멈추는 자리에는 쉼표와 "..."를 넣고, 말끝을 흐리거나 끊어도 된다. 숨이 차거나 흥분했거나 참고 있는 장면일수록 문장을 짧게 끊고 쉼을 늘린다.',
-    '- 숨소리, 한숨, 웃음 같은 소리는 그 소리가 나는 자리에 다음 태그를 그대로 넣어 표현할 수 있다(영어 그대로, 꺾쇠 포함. 화면에는 보이지 않고 목소리에만 반영된다): <breath> <heavy breath> <exhales> <pant> <moan> <gasp> <groan> <sigh> <whimper> <chuckle> <laugh> <giggle> <whispers> <short pause> <long pause>. 장면에 맞을 때만, 한 줄에 한두 개까지 쓴다. 목록에 없는 태그는 만들지 않는다.');
+    '- 숨소리, 한숨, 웃음 같은 소리는 그 소리가 나는 자리에 다음 태그를 그대로 넣어 표현할 수 있다(영어 그대로, 꺾쇠 포함. 화면에는 보이지 않고 목소리에만 반영된다): <breath> <heavy breath> <exhales> <pant> <moan> <gasp> <groan> <sigh> <whimper> <chuckle> <laugh> <giggle> <whispers> <short pause> <long pause>. 장면에 맞을 때만, 한 줄에 한두 개까지 쓴다. 목록에 없는 태그는 만들지 않는다.',
+    '- 위 소리 태그 말고는 대사에 영어를 섞지 않는다. 쓰다가 고치고 싶어도 메모, 주석, 화살표(->), 고쳐 쓴 흔적을 남기지 말고 처음부터 완성된 줄만 출력한다.');
   if (tags.length || voice) L.push(`- 예) ${tags.length ? '[' + tags[0] + ']' : ''}${voice ? '{나른하게 낮게}' : ''} 뭐 하고 있었어?`);
   return L.join('\n');
 }
@@ -3767,7 +3774,7 @@ $('#btnWidgetNew').onclick = async () => {
 };
 
 /* ───────── 업데이트 확인 (GitHub Releases) ───────── */
-const APP_VERSION = '1.10.1';
+const APP_VERSION = '1.10.2';
 const UPDATE_BASE = 'https://raw.githubusercontent.com/harp1455/Chat/main/release/';
 const RELEASES_PAGE = 'https://github.com/harp1455/Chat/releases';
 const verCmp = (a, b) => { const x = String(a).replace(/^v/, '').split('.').map(n => parseInt(n, 10) || 0), y = String(b).replace(/^v/, '').split('.').map(n => parseInt(n, 10) || 0); for (let i = 0; i < 3; i++) if ((x[i] || 0) !== (y[i] || 0)) return (x[i] || 0) - (y[i] || 0); return 0; };

@@ -317,6 +317,8 @@ ol.diag{list-style:none;margin:12px 0 0;padding:0;display:flex;flex-direction:co
 .vprow{display:flex;gap:10px;align-items:center;padding:9px 12px;border:1px solid var(--line);border-radius:10px;background:#141822}
 .vprow .vi{flex:1;min-width:0}.vprow .vi b{display:block}.vprow .vi span{color:var(--dim);font-size:12.5px;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .vprow.on{border-color:var(--lemon)}
+.vdpair{display:flex;flex-direction:column;gap:6px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#141822;font-size:13.5px}
+.vdpair .rowx{align-items:center}
 .gauth{display:flex;flex-direction:column;gap:8px;border-top:1px solid var(--line);padding-top:10px;margin-top:4px}
 .vxbox{display:flex;flex-direction:column;gap:8px;margin-top:6px;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:#141822}
 .lockNote{background:rgba(255,226,120,.08);border:1px solid rgba(255,226,120,.25);border-radius:10px;padding:10px 12px;font-size:13.5px;color:#e9dca8}
@@ -526,10 +528,11 @@ dialog[open]::backdrop{animation:fadein .22s ease}
           <textarea id="vdDesc" rows="2" placeholder="예: 20대 후반 남성. 낮고 약간 건조한 목소리, 차분하고 또렷한 발음."></textarea></label>
         <div class="rowx">
           <select id="vdGender" style="width:auto"><option value="male">남성</option><option value="female">여성</option></select>
-          <select id="vdWhere" style="width:auto" title="목소리를 저장할 곳" hidden><option value="studio">AI Studio에 만들기</option><option value="vertex">Vertex AI에 만들기</option></select>
+          <select id="vdWhere" style="width:auto" title="목소리를 저장할 곳" hidden><option value="both">AI Studio와 Vertex에 함께 만들기</option><option value="studio">AI Studio에만 만들기</option><option value="vertex">Vertex AI에만 만들기</option></select>
           <button id="btnVoiceDesign">목소리 만들기</button>
         </div>
-        <p class="hint">만든 목소리는 내 API 키(구글 프로젝트)에 저장되며, 다른 사람의 키에서는 쓸 수 없습니다.</p>
+        <div id="vdPair" class="vdpair" hidden></div>
+        <p class="hint">만든 목소리는 내 구글 프로젝트에 저장되며, 다른 사람의 키에서는 쓸 수 없습니다. ‘함께 만들기’는 같은 설명·성별·기준 목소리로 두 곳에 하나씩 만들어 짝지어 둡니다. 평소에는 Vertex 쪽으로 한도 없이 읽고, Vertex를 쓸 수 없을 때(로그인 만료, Vertex 키가 없는 기기 등) AI Studio 쪽으로 대신 읽습니다.</p>
       </div>
     </details>
 
@@ -804,11 +807,11 @@ dialog[open]::backdrop{animation:fadein .22s ease}
       <ol class="diag" id="vxList" hidden></ol>
       <div class="gauth">
         <b>구글 로그인 (직접 만든 목소리를 한도 없이 쓰기)</b>
-        <p class="hint">Vertex에서 목소리를 만들려면 키가 아니라 구글 계정 로그인이 필요합니다. 한 번 로그인해 두면 캐릭터 설정의 ‘Vertex AI에 만들기’로 목소리를 만들고, 그 목소리를 Vertex로 하루 한도 없이 읽습니다. 로그인은 PC 앱에서 합니다.</p>
+        <p class="hint">Vertex에서 목소리를 만들려면 키가 아니라 구글 계정 로그인이 필요합니다. 한 번 로그인해 두면 캐릭터 설정의 목소리 만들기로 Vertex에 목소리를 만들고, 그 목소리를 하루 한도 없이 읽습니다. PC 앱과 휴대폰 앱 모두 로그인할 수 있고, 한쪽에서 로그인한 뒤 ‘로그인 코드 복사’로 다른 기기에 옮겨도 됩니다.</p>
         <div class="rowx"><button id="btnOauthFile">OAuth 클라이언트 파일 불러오기</button><span class="hint" id="oauthFileMsg"></span><input type="file" id="oauthFile" accept=".json,application/json" hidden></div>
         <div class="rowx"><button class="main" id="btnGLogin">구글 로그인</button><button id="btnGLogout" class="quiet" hidden>로그아웃</button><span class="hint" id="gauthMsg"></span></div>
-        <div class="rowx" id="gMoveRow" hidden><button id="btnGCopy" class="quiet">휴대폰에서도 쓰기: 로그인 코드 복사</button></div>
-        <div class="rowx" id="gPasteRow"><input type="text" id="gPaste" placeholder="PC에서 복사한 로그인 코드를 붙여 넣기" autocomplete="off" spellcheck="false" style="flex:1"><button id="btnGPaste">적용</button></div>
+        <div class="rowx" id="gMoveRow" hidden><button id="btnGCopy" class="quiet">다른 기기에서도 쓰기: 로그인 코드 복사</button></div>
+        <div class="rowx" id="gPasteRow"><input type="text" id="gPaste" placeholder="다른 기기에서 복사한 로그인 코드를 붙여 넣기" autocomplete="off" spellcheck="false" style="flex:1"><button id="btnGPaste">적용</button></div>
       </div>
       <div class="rowx" id="vxCopyRow" hidden><button id="btnVxCopy">결과 복사</button><span class="hint">막히면 복사해서 그대로 붙여 넣어 알려 주세요. 키는 들어가지 않습니다.</span></div>
       <p class="hint">직접 만든 목소리는 만든 곳(AI Studio 또는 Vertex)에 저장됩니다. 앱이 목소리마다 Vertex에서 되는지 한 번 시험해 기억해 두고, 안 되는 목소리만 AI Studio로 읽습니다.</p>
@@ -1801,16 +1804,23 @@ const Voice = {
   async synth(char, text, style, onCost) {
     const say = Voice.speakable(text); if (!say) return null;
     const st = [char.voiceStyle, style].map(x => (x || '').trim()).filter(Boolean).join(', ');
+    const twin = twinOf(char.voice);
+    // Vertex에서 만든 목소리를 이 기기에서 Vertex로 못 읽으면(키·로그인 없음, 보낼 곳이 AI Studio) 짝지은 AI Studio 목소리로
+    if (twin && !Voice.viaVertex(char.voice)) return Voice.synthStudio({ ...char, voice: twin }, say, st, onCost);
     if (Voice.viaVertex(char.voice)) {
       const custom = !Voice.isPrebuilt(char.voice);
       try { const url = await Voice.synthVertex(char, say, st, onCost); if (custom) Voice.setHome(char.voice, 'vertex'); return url; }
       catch (e) {
         if (e.name === 'AbortError' || e.kind === 'quota' || e.kind === 'server' || e.kind === 'network') throw e;
-        if (custom && Voice.home(char.voice) === 'vertex') throw e; // Vertex에서 만든 목소리는 AI Studio에 없다
+        if (custom && Voice.home(char.voice) === 'vertex') { if (twin) { Voice.twinNote || toast('Vertex로 읽지 못해 짝지은 AI Studio 목소리로 읽습니다. ' + e.message.split('\n')[0], 7000); Voice.twinNote = true; return Voice.synthStudio({ ...char, voice: twin }, say, st, onCost); } throw e; } // Vertex에서 만든 목소리는 AI Studio에 없다
         if (custom) { Voice.setHome(char.voice, 'studio'); toast('이 목소리는 Vertex AI에서 쓸 수 없어 AI Studio로 읽습니다(하루 한도 적용). 한도 없이 쓰려면 ‘목소리 고르기’에서 다른 목소리를 골라 보세요.', 9000); }
         else { Voice.vertexBroken = true; toast('Vertex AI로 목소리를 만들지 못해 AI Studio로 읽습니다. ' + e.message.split('\n')[0] + ' 설정 → 목소리의 ‘Vertex 연결 확인’으로 확인하세요.', 9000); }
       }
     }
+    return Voice.synthStudio(char, say, st, onCost);
+  },
+  // AI Studio(Gemini API 키)로 읽기: 하루 한도가 차면 가벼운 모델로, 그것도 차면 멈춘다
+  async synthStudio(char, say, st, onCost) {
     const model = Voice.model(), key = [model, char.voice, st, say].join('|');
     if (Voice.cache.has(key)) return Voice.cache.get(key);
     if (Voice.pending.has(key)) return Voice.pending.get(key);
@@ -1819,7 +1829,7 @@ const Voice = {
     const job = Voice.queue(() => withRetry(() => gfetch('models/' + encodeURIComponent(model) + ':generateContent', { method: 'POST',
       body: { contents: [{ role: 'user', parts: [part] }], generationConfig: { responseModalities: ['AUDIO'], speechConfig: { voiceConfig: { voice: char.voice.trim() } } } } }), { tries: 4 }))
       .then(res => res.json()).then(j => Voice.finish(j, key, say, onCost, model))
-      .catch(e => { if (!Voice.isDaily(e)) throw e; Voice.pending.delete(key); return Voice.hitDaily(model) ? Voice.synth(char, text, style, onCost) : null; })
+      .catch(e => { if (!Voice.isDaily(e)) throw e; Voice.pending.delete(key); return Voice.hitDaily(model) ? Voice.synthStudio(char, say, st, onCost) : null; })
       .finally(() => Voice.pending.delete(key));
     Voice.pending.set(key, job);
     return job;
@@ -2638,7 +2648,7 @@ function openChar() {
   const c = curChar(); if (!c) return;
   if (isStory(c)) return openStory();
   moveBlocks(false); applyLockUi(c);
-  { const w = $('#vdWhere'); w.hidden = !vertexKeyOf() || (S.settings.vertexDesign === false && !gLogged()); if (!w.hidden && !w.dataset.touched) w.value = S.settings.voiceRoute === 'vertex' ? 'vertex' : 'studio'; w.onchange = () => { w.dataset.touched = '1'; }; }
+  { const w = $('#vdWhere'); w.hidden = !vertexKeyOf() || (S.settings.vertexDesign === false && !gLogged()); if (!w.hidden && !w.dataset.touched) w.value = S.settings.voiceRoute === 'vertex' ? 'both' : 'studio'; w.onchange = () => { w.dataset.touched = '1'; }; renderPair(c); }
   fillCharFields(c);
   refreshCounts(); renderKb(); if (!c.proPerDay) $('[data-char="proPerDay"]').value = '3';
   $('#voiceMsg').textContent = '';
@@ -2841,28 +2851,66 @@ $('#btnVoiceTest').onclick = async () => {
   try { const url = await Voice.synth(c, (c.greeting || '').split('\n')[0].replace(/^\[[^\]]*\]|\{[^}]*\}/g, '').trim() || '안녕, 나야. 내 목소리 어때?', '', usd => spend(null, 'test', usd)); msg.textContent = ''; await Voice.play(url); }
   catch (e) { msg.textContent = e.message.split('\n')[0]; }
 };
+// ── 목소리 만들기: AI Studio / Vertex / 둘 다 (같은 설명으로 하나씩 만들어 짝지어 둔다)
+const vdBody = (where, c, desc, gender, base) => where === 'vertex'
+  ? { store: true, voice: { type: 'VOICE_TYPE_PROMPTED', displayName: (c.name || '캐릭터').slice(0, 40), gender, languageCode: 'ko-KR', prompted: { input: desc, ...(base ? { baseVoice: base } : {}) } } }
+  : { store: true, voice: { model: cleanModel(S.settings.ttsModel) || DEFAULTS.ttsModel, type: 'prompted', display_name: (c.name || '캐릭터').slice(0, 40), gender, language_code: 'ko-KR', prompted: { input: desc, ...(base ? { base_voice: base } : {}) } } };
+async function designVoice(where, c, desc, gender, base) {
+  const send = b => where === 'vertex'
+    ? vcall(gLogged() ? vertexVoicesUrlLogin() : vertexVoicesUrl(), { bearer: gLogged(), body: vdBody('vertex', c, desc, gender, b) })
+    : gfetch('voices', { method: 'POST', body: vdBody('studio', c, desc, gender, b) });
+  let res;
+  try { res = await send(base); } catch (e) { if (!base || !(e.kind === 'request' || e.code === 400)) throw e; res = await send(''); } // 기준 목소리를 못 받으면 없이 다시
+  const j = await res.json(), id = String(j.id || j.voice?.id || j.name || '').replace(/^.*voices\//, '');
+  if (!id) throw new Error('목소리 ID를 받지 못했습니다.');
+  const sample = j.sample_audio?.data || j.sampleAudio?.data || j.voice?.sample_audio?.data || j.voice?.sampleAudio?.data || '';
+  const pr = j.prompted || j.voice?.prompted || {};
+  if (where === 'vertex') { Voice.setHome(id, 'vertex'); spend(null, 'voice', costOf(Voice.vertexModel(), usageOf(j.usage || j.usageMetadata) || { p: 220, c: 0, o: 1100 })); }
+  return { id, sample, base: pr.base_voice || pr.baseVoice || '' };
+}
+// 짝: Vertex 목소리 ID → AI Studio 목소리 ID (Vertex를 못 쓸 때 대신 읽는다)
+const twinOf = v => (S.settings.voiceTwins || {})[(v || '').trim()] || '';
+function renderPair(c) {
+  const box = $('#vdPair'), vx = (c?.voice || '').trim(), st = twinOf(vx);
+  box.hidden = !(vx && st); if (box.hidden) return; box.textContent = '';
+  const row = (label, where, id) => h('div', { class: 'rowx' }, h('span', { style: 'flex:1', text: `${label}: ${id}` }),
+    h('button', { type: 'button', onclick: async e => { const b = e.target; b.disabled = true; try { const url = where === 'vertex' ? await Voice.synthVertex({ voice: id }, '안녕하세요. 제 목소리, 어떤가요?', '', usd => spend(null, 'test', usd)) : await Voice.synthStudio({ voice: id }, '안녕하세요. 제 목소리, 어떤가요?', '', usd => spend(null, 'test', usd)); if (url) await Voice.play(url); } catch (er) { toast('들어 보지 못했습니다. ' + er.message.split('\n')[0], 5000); } b.disabled = false; } }, '들어 보기'),
+    h('button', { type: 'button', class: 'quiet', title: '이쪽만 같은 설명으로 다시 만듭니다', onclick: () => remakeSide(where) }, '이쪽만 다시 만들기'));
+  box.append(h('b', { text: '짝지은 목소리' }), row('Vertex (평소)', 'vertex', vx), row('AI Studio (대신 읽을 때)', 'studio', st),
+    h('span', { class: 'hint', text: '두 곳이 각자 목소리를 만들어서 똑같지는 않습니다. 들어 보고 차이가 크면 한쪽만 다시 만드세요.' }));
+}
+async function remakeSide(where) {
+  const c = curChar(), msg = $('#voiceMsg'), d = c.voiceDesign; if (!d?.desc) { msg.textContent = '설명이 저장되어 있지 않아 다시 만들 수 없습니다. 위에서 새로 만들어 주세요.'; return; }
+  msg.textContent = (where === 'vertex' ? 'Vertex' : 'AI Studio') + ' 쪽 목소리를 다시 만드는 중…';
+  try {
+    const r = await designVoice(where, c, d.desc, d.gender, d.base);
+    const tw = { ...(S.settings.voiceTwins || {}) }, vx = (c.voice || '').trim();
+    if (where === 'vertex') { const st = tw[vx]; delete tw[vx]; tw[r.id] = st; c.voice = r.id; $('#dlgChar [data-char="voice"]').value = r.id; } else tw[vx] = r.id;
+    S.settings.voiceTwins = tw; saveSettings(); saveChar(); renderPair(c); msg.textContent = '다시 만들었습니다.';
+    if (r.sample) await Voice.play(Voice.toUrl(r.sample));
+  } catch (e) { msg.textContent = '다시 만들지 못했습니다. ' + e.message.split('\n')[0]; }
+}
 $('#btnVoiceDesign').onclick = async () => {
-  const c = curChar(); const msg = $('#voiceMsg'); const desc = $('#vdDesc').value.trim();
+  const c = curChar(); const msg = $('#voiceMsg'); const desc = $('#vdDesc').value.trim(), gender = $('#vdGender').value;
   if (!keyOf()) { msg.textContent = '먼저 설정에서 API 키를 입력하세요.'; return; }
   if (!desc) { msg.textContent = '목소리 설명을 적어 주세요.'; return; }
-  msg.textContent = '새 목소리를 만드는 중…';
-  const onVertex = !$('#vdWhere').hidden && $('#vdWhere').value === 'vertex';
+  const where = $('#vdWhere').hidden ? 'studio' : $('#vdWhere').value;
+  if (where !== 'studio' && !S.settings.vxVoiceWay && !gLogged()) { msg.textContent = 'Vertex에 만들려면 설정 → 목소리에서 구글 로그인을 먼저 해 주세요.'; return; }
+  if (where !== 'studio' && gLogged() && !vertexProject()) { msg.textContent = '설정 → 목소리의 ‘구글 클라우드 프로젝트 ID’ 칸을 채워 주세요.'; return; }
+  const b = $('#btnVoiceDesign'); b.disabled = true;
   try {
-    if (onVertex && !S.settings.vxVoiceWay && !gLogged()) throw gErr('nologin', '설정 → 목소리에서 구글 로그인을 먼저 해 주세요.');
-    if (onVertex && gLogged() && !vertexProject()) throw gErr('nologin', '설정 → 목소리의 ‘구글 클라우드 프로젝트 ID’ 칸을 채워 주세요.');
-    const res = onVertex
-      ? await vcall(gLogged() ? vertexVoicesUrlLogin() : vertexVoicesUrl(), { bearer: gLogged(), body: { store: true, voice: { type: 'VOICE_TYPE_PROMPTED', displayName: (c.name || '캐릭터').slice(0, 40), gender: $('#vdGender').value, languageCode: 'ko-KR', prompted: { input: desc } } } })
-      : await gfetch('voices', { method: 'POST',
-      body: { store: true, voice: { model: cleanModel(S.settings.ttsModel) || DEFAULTS.ttsModel, type: 'prompted', display_name: (c.name || '캐릭터').slice(0, 40), gender: $('#vdGender').value, language_code: 'ko-KR', prompted: { input: desc } } } });
-    const j = await res.json(); const id = j.id || j.voice?.id || j.name;
-    if (!id) throw new Error('목소리 ID를 받지 못했습니다.');
-    Voice.setHome(String(id).replace(/^.*voices\//, ''), onVertex ? 'vertex' : ''); if (onVertex) spend(null, 'voice', costOf(Voice.vertexModel(), usageOf(j.usage || j.usageMetadata) || { p: 220, c: 0, o: 1100 }));
-    c.voice = String(id).replace(/^.*voices\//, ''); c.voiceOn = true; saveChar();
+    let vx = null, st = null, base = '';
+    if (where !== 'studio') { msg.textContent = 'Vertex에 목소리를 만드는 중…'; vx = await designVoice('vertex', c, desc, gender, ''); base = vx.base; }
+    if (where !== 'vertex') { msg.textContent = where === 'both' ? '같은 설명으로 AI Studio에도 만드는 중…' : '새 목소리를 만드는 중…'; st = await designVoice('studio', c, desc, gender, base); }
+    c.voice = (vx || st).id; c.voiceOn = true; c.voiceDesign = { desc, gender, base: base || st?.base || '' };
+    if (vx && st) S.settings.voiceTwins = { ...(S.settings.voiceTwins || {}), [vx.id]: st.id };
+    saveSettings(); saveChar();
     $('#dlgChar [data-char="voice"]').value = c.voice; $('#dlgChar [data-char="voiceOn"]').checked = true;
-    msg.textContent = onVertex ? '새 목소리를 Vertex AI에 만들어 등록했습니다. 이 목소리는 Vertex로만 읽습니다.' : '새 목소리를 등록했습니다.';
-    const sample = j.sample_audio?.data || j.sampleAudio?.data || j.voice?.sample_audio?.data;
-    if (sample) await Voice.play(Voice.toUrl(sample));
-  } catch (e) { msg.textContent = (onVertex ? 'Vertex AI에서 목소리를 만들지 못했습니다. ' + (e.kind === 'model' || e.code === 404 ? '이 키로는 목소리 만들기 기능에 닿지 못했습니다. 설정 → 목소리의 ‘Vertex 연결 확인’을 눌러 보세요. ' : '') : '') + e.message.split('\n')[0]; }
+    msg.textContent = vx && st ? '두 곳에 목소리를 만들어 짝지었습니다. 평소에는 Vertex 쪽으로 한도 없이 읽습니다. 아래에서 둘을 비교해 들어 보세요.' : vx ? '새 목소리를 Vertex AI에 만들어 등록했습니다. 이 목소리는 Vertex로만 읽습니다.' : '새 목소리를 등록했습니다.';
+    renderPair(c);
+    const sample = (vx || st).sample; if (sample) await Voice.play(Voice.toUrl(sample));
+  } catch (e) { msg.textContent = '목소리를 만들지 못했습니다. ' + e.message.split('\n')[0]; renderPair(c); }
+  b.disabled = false;
 };
 $('#btnCharDelete').onclick = deleteChar;
 $('#btnChar').onclick = () => openEditor(); $('#btnKey2').onclick = () => openSettings();
@@ -3090,9 +3138,10 @@ $('#btnVoicePick').onclick = () => { const f = $('#dlgChar [data-char="voice"]')
 function renderGauth() {
   const c = S.settings.oauthClient, a = S.settings.gauth;
   $('#oauthFileMsg').textContent = c?.id ? `불러옴 (${c.id.slice(0, 12)}…)` : 'PC에서 처음 한 번만 필요합니다.';
-  $('#btnGLogin').hidden = !DESK; $('#btnGLogout').hidden = !gLogged(); $('#gMoveRow').hidden = !(gLogged() && DESK); $('#gPasteRow').hidden = !!DESK || gLogged();
-  $('#btnOauthFile').hidden = !DESK && !c?.id;
-  $('#gauthMsg').textContent = gLogged() ? `로그인됨: ${a.email || '구글 계정'}` : DESK ? (c?.id ? '로그인하면 기본 브라우저에서 구글 로그인 창이 열립니다.' : '먼저 OAuth 클라이언트 파일을 불러오세요.') : '휴대폰에서는 PC 앱에서 복사한 로그인 코드를 붙여 넣으세요.';
+  const can = !!(DESK || CAPN); // PC 앱과 휴대폰 앱에서 로그인할 수 있다 (브라우저로 연 HTML 파일은 불가)
+  $('#btnGLogin').hidden = !can; $('#btnGLogout').hidden = !gLogged(); $('#gMoveRow').hidden = !gLogged(); $('#gPasteRow').hidden = gLogged();
+  $('#btnOauthFile').hidden = !can && !c?.id;
+  $('#gauthMsg').textContent = gLogged() ? `로그인됨: ${a.email || '구글 계정'}` : !can ? '로그인은 PC 앱이나 휴대폰 앱에서 할 수 있습니다. 다른 기기에서 복사한 로그인 코드를 붙여 넣어도 됩니다.' : c?.id ? '로그인하면 기본 브라우저에서 구글 로그인 창이 열립니다.' : '먼저 OAuth 클라이언트 파일을 불러오세요. (휴대폰은 파일을 휴대폰에 옮겨 두거나, PC에서 복사한 로그인 코드를 붙여 넣어도 됩니다)';
 }
 $('#btnOauthFile').onclick = () => $('#oauthFile').click();
 $('#oauthFile').addEventListener('change', async e => {
@@ -3102,10 +3151,28 @@ $('#oauthFile').addEventListener('change', async e => {
     S.settings.oauthClient = { id: o.client_id, secret: o.client_secret || '' }; saveSettings(); renderGauth(); toast('불러왔습니다. 이제 ‘구글 로그인’을 누르세요.'); }
   catch (er) { toast('불러오지 못했습니다. ' + er.message, 5000); }
 });
+// 휴대폰: 구글은 앱 안 화면에서의 로그인을 막으므로, 기본 브라우저로 로그인하고 결과를 휴대폰 안 임시 주소(127.0.0.1)로 받는다
+async function mobileLogin(c) {
+  const NSP = NS(), http = capPlugin('CapacitorHttp'); if (!NSP?.startLoopback || !http) throw new Error('이 버전의 앱에서는 로그인할 수 없습니다. 앱을 최신 버전으로 설치해 주세요.');
+  const rnd = n => bytesToB64(crypto.getRandomValues(new Uint8Array(n))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  const verifier = rnd(48), stateTok = rnd(16);
+  const challenge = bytesToB64(new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(verifier)))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  const { port } = await NSP.startLoopback(), redirect = `http://127.0.0.1:${port}`;
+  const wait = NSP.waitLoopback();
+  await NSP.openExternal({ url: 'https://accounts.google.com/o/oauth2/v2/auth?' + new URLSearchParams({ client_id: c.id, redirect_uri: redirect, response_type: 'code', scope: 'https://www.googleapis.com/auth/cloud-platform openid email', code_challenge: challenge, code_challenge_method: 'S256', access_type: 'offline', prompt: 'consent', state: stateTok }) });
+  const r = await wait;
+  if (!r?.code || r.state !== stateTok) throw new Error(r?.error === 'access_denied' ? '로그인 화면에서 허용하지 않았거나, 이 계정이 테스트 사용자에 없습니다.' : '로그인 결과를 받지 못했습니다.');
+  const res = await http.request({ url: 'https://oauth2.googleapis.com/token', method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    data: new URLSearchParams({ code: r.code, client_id: c.id, client_secret: c.secret || '', redirect_uri: redirect, grant_type: 'authorization_code', code_verifier: verifier }).toString() });
+  const j = typeof res.data === 'string' ? JSON.parse(res.data) : res.data;
+  if (res.status >= 300) throw new Error(j?.error_description || j?.error || `HTTP ${res.status}`);
+  let email = ''; try { email = JSON.parse(atob(String(j.id_token || '').split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))).email || ''; } catch { }
+  return { access: j.access_token, refresh: j.refresh_token || '', exp: Date.now() + (Number(j.expires_in) || 3600) * 1000, email };
+}
 $('#btnGLogin').onclick = async () => {
   const c = S.settings.oauthClient; if (!c?.id) { toast('먼저 OAuth 클라이언트 파일을 불러오세요.'); return; }
   const b = $('#btnGLogin'); b.disabled = true; $('#gauthMsg').textContent = '브라우저에서 로그인을 마쳐 주세요… (‘확인되지 않은 앱’ 경고가 나오면 고급 → 이동을 누르면 됩니다)';
-  try { const t = await DESK.googleLogin({ clientId: c.id, clientSecret: c.secret });
+  try { const t = DESK ? await DESK.googleLogin({ clientId: c.id, clientSecret: c.secret }) : await mobileLogin(c);
     if (!t.refresh) throw new Error('갱신 토큰을 받지 못했습니다. 다시 한 번 로그인해 주세요.');
     S.settings.gauth = t; saveSettings(); Voice.bearerVoices.clear(); toast('구글에 로그인했습니다. ‘Vertex 연결 확인’을 누르면 목소리 만들기를 확인합니다.', 6000); }
   catch (e) { toast('로그인하지 못했습니다. ' + String(e.message || e).replace(/^Error invoking remote method '[^']+': (Error: )?/, ''), 8000); }
@@ -3609,7 +3676,7 @@ $('#btnWidgetNew').onclick = async () => {
 };
 
 /* ───────── 업데이트 확인 (GitHub Releases) ───────── */
-const APP_VERSION = '1.8.0';
+const APP_VERSION = '1.9.0';
 const UPDATE_BASE = 'https://raw.githubusercontent.com/harp1455/Chat/main/release/';
 const RELEASES_PAGE = 'https://github.com/harp1455/Chat/releases';
 const verCmp = (a, b) => { const x = String(a).replace(/^v/, '').split('.').map(n => parseInt(n, 10) || 0), y = String(b).replace(/^v/, '').split('.').map(n => parseInt(n, 10) || 0); for (let i = 0; i < 3; i++) if ((x[i] || 0) !== (y[i] || 0)) return (x[i] || 0) - (y[i] || 0); return 0; };

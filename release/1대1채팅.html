@@ -3021,7 +3021,7 @@ async function runVertexDiag(list) {
       catch (e) {
         if (e.kind === 'quota' || e.kind === 'server' || e.kind === 'network') { lines.push(`${who.join(', ')}: 지금은 확인하지 못했습니다. ${first(e)}`); continue; }
         if (Voice.home(voice) === 'vertex') { lines.push(`${who.join(', ')}: Vertex에서 만든 목소리인데 읽지 못했습니다. ${first(e)}`); continue; }
-        Voice.setHome(voice, 'studio'); lines.push(`${who.join(', ')}: Vertex에서는 쓸 수 없습니다(AI Studio에서 만든 목소리). 이 목소리는 AI Studio로 읽습니다. — ${first(e)}`);
+        Voice.setHome(voice, 'studio'); lines.push(`${who.join(', ')}: Vertex에는 이 목소리가 없습니다(AI Studio에 저장된 목소리). 이 목소리는 AI Studio로 읽습니다. Vertex에서 쓰려면 ‘Vertex AI에 만들기’로 새로 만들어야 합니다.`);
       }
     }
     const bad = lines.filter(l => !l.includes('쓸 수 있습니다')).length;
@@ -3031,7 +3031,9 @@ async function runVertexDiag(list) {
   s = step('Vertex에서 목소리 만들기'); let designOk = false;
   try { const j = await (await vcall(vertexVoicesUrl('?type=prompted&type=replicated'), { method: 'GET' })).json(); designOk = true; const n = (j.voices || []).length;
     s.set('ok', `쓸 수 있습니다. 이 프로젝트에 저장된 목소리 ${n}개. 캐릭터 설정의 ‘목소리 만들기’에서 ‘Vertex AI에 만들기’를 고르면 됩니다.`); }
-  catch (e) { s.set('warn', (vertexProject() ? '이 키와 프로젝트로는 목소리 만들기 기능에 닿지 못했습니다.' : '이 키만으로는 목소리 만들기 기능에 닿지 못했습니다. 위의 ‘구글 클라우드 프로젝트 ID’ 칸에 프로젝트 ID를 적고 다시 눌러 보세요.') + '\n기본 목소리로 읽는 데는 문제가 없습니다.\n' + first(e)); }
+  catch (e) { s.set('warn', (vertexProject() ? (e.code === 403 || e.code === 401
+      ? '목소리 만들기 권한이 없습니다. 키를 묶은 서비스 계정에 ‘Agent Platform User’(예전 이름 Vertex AI User) 역할을 하나 더 주세요. (IAM 및 관리자 → IAM → 서비스 계정 줄의 연필 버튼 → 다른 역할 추가)\n프로젝트 ID 칸에는 프로젝트 ‘이름’이 아니라 ‘ID’를 적어야 합니다. 콘솔 맨 위 프로젝트 선택 창에서 ID 열을 확인하세요.'
+      : '이 키와 프로젝트로는 목소리 만들기 기능에 닿지 못했습니다.') : '이 키만으로는 목소리 만들기 기능에 닿지 못했습니다. 위의 ‘구글 클라우드 프로젝트 ID’ 칸에 프로젝트 ID를 적고 다시 눌러 보세요.') + '\n기본 목소리로 읽는 데는 문제가 없습니다.\n' + first(e)); }
   const fails = out.filter(l => l.state === 'fail').length, warns = out.filter(l => l.state === 'warn').length;
   step('결과').set(fails ? 'fail' : warns ? 'warn' : 'ok', fails ? '실패한 항목이 있습니다.' : warns ? 'Vertex로 목소리를 읽을 수 있습니다. 주의 항목은 위 안내를 확인하세요.' : '모두 정상입니다.');
   S.settings.vertexDesign = designOk; saveSettings();
@@ -3461,7 +3463,7 @@ $('#btnWidgetNew').onclick = async () => {
 };
 
 /* ───────── 업데이트 확인 (GitHub Releases) ───────── */
-const APP_VERSION = '1.6.1';
+const APP_VERSION = '1.6.2';
 const UPDATE_BASE = 'https://raw.githubusercontent.com/harp1455/Chat/main/release/';
 const RELEASES_PAGE = 'https://github.com/harp1455/Chat/releases';
 const verCmp = (a, b) => { const x = String(a).replace(/^v/, '').split('.').map(n => parseInt(n, 10) || 0), y = String(b).replace(/^v/, '').split('.').map(n => parseInt(n, 10) || 0); for (let i = 0; i < 3; i++) if ((x[i] || 0) !== (y[i] || 0)) return (x[i] || 0) - (y[i] || 0); return 0; };

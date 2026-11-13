@@ -1583,16 +1583,48 @@ async function withRetry(fn, { signal, onWait, tries = 3 } = {}) {
 async function callGemini({ model, system, contents, stream, json, signal, onWait }) {
   return withRetry(() => callGeminiOnce({ model, system, contents, stream, json, signal }), { signal, onWait });
 }
+// 구글이 공식으로 열어 둔 '조절 가능한' 안전 필터(괴롭힘·혐오·성적·위험·선거)를 끈다.
+// 구글 자체의 고정 정책(PROHIBITED_CONTENT 등)은 이 설정과 상관없이 늘 켜져 있다.
+const SAFETY_CATS = ['HARM_CATEGORY_HARASSMENT', 'HARM_CATEGORY_HATE_SPEECH', 'HARM_CATEGORY_SEXUALLY_EXPLICIT', 'HARM_CATEGORY_DANGEROUS_CONTENT', 'HARM_CATEGORY_CIVIC_INTEGRITY'];
+const safetyLevel = {}; // 모델마다 받아 주는 단계: 'off' → 'none' → 'skip'
+const safetyOf = model => {
+  const lv = safetyLevel[model] || 'off';
+  if (lv === 'skip') return null;
+  return SAFETY_CATS.map(category => ({ category, threshold: lv === 'off' && category !== 'HARM_CATEGORY_CIVIC_INTEGRITY' ? 'OFF' : 'BLOCK_NONE' }));
+};
 async function callGeminiOnce({ model, system, contents, stream, json, signal }) {
   model = cleanModel(model);
-  const make = think => ({ systemInstruction: { parts: [{ text: withHeader(system) }] }, contents, generationConfig: genConfig(model, json, think) });
+  const make = think => { const b = { systemInstruction: { parts: [{ text: withHeader(system) }] }, contents, generationConfig: genConfig(model, json, think) }; const ss = safetyOf(model); if (ss) b.safetySettings = ss; return b; };
   const path = 'models/' + encodeURIComponent(model) + (stream ? ':streamGenerateContent?alt=sse' : ':generateContent');
-  try { return await gfetch(path, { method: 'POST', body: make(!noThink.has(model)), signal }); }
-  catch (e) {
-    if (e.code === 400 && /thinking/i.test(e.raw || '') && !noThink.has(model)) { noThink.add(model); return gfetch(path, { method: 'POST', body: make(false), signal }); }
-    throw e;
+  for (let i = 0; ; i++) {
+    try { return await gfetch(path, { method: 'POST', body: make(!noThink.has(model)), signal }); }
+    catch (e) {
+      if (i > 4 || e.code !== 400) throw e;
+      if (/thinking/i.test(e.raw || '') && !noThink.has(model)) { noThink.add(model); continue; }
+      // 이 모델이 안전 설정 값을 받지 않으면 한 단계씩 물러난다
+      if (/safety|threshold|harm/i.test(e.raw || '') && safetyLevel[model] !== 'skip') { safetyLevel[model] = safetyLevel[model] === 'none' ? 'skip' : 'none'; continue; }
+      throw e;
+    }
   }
 }
+// 답이 막히거나 비었을 때, 왜 그런지 사람이 알아듣게 풀어 준다
+function blockHelp(block, finish, detail) {
+  const r = block || finish;
+  const tail = detail ? `\n\n[구글이 보낸 원문] ${detail}` : '';
+  const fixed = '이건 구글이 모든 사용자에게 똑같이 거는 고정 정책이라, 앱 설정이나 프롬프트 첫 줄(CRITICAL 문구 포함)로는 풀리지 않습니다. 문구는 모델의 태도에만 영향을 줄 뿐, 그 앞단의 필터는 문장을 읽고 따르지 않습니다.';
+  const where = block ? '보낸 내용(프롬프트·대화 기록·로어북·기억 요약)' : '모델이 쓰던 답';
+  const hints = '자주 걸리는 경우\n· 인물의 나이가 어리게 읽히는 말(학생·교복·고등학교·몇 살 등)이 성인 인물 설정이나 장면과 함께 있을 때 — 성적인 장면이 아니어도 앞뒤 기록 때문에 걸릴 수 있습니다\n· 최근 대화나 기억 요약에 앞서 걸렸던 장면이 남아 있을 때\n· 실존 인물·실제 사건과 엮인 내용';
+  if (block === 'PROHIBITED_CONTENT' || finish === 'PROHIBITED_CONTENT' || block === 'OTHER' || block === 'BLOCKLIST' || finish === 'BLOCKLIST' || finish === 'SPII')
+    return `구글의 고정 정책이 ${where}을(를) 막았습니다. (사유: ${r})\n${fixed}\n\n${hints}\n\n‘다시 시도’로 한 번 더 돌려 보고, 그래도 막히면 직전 메시지나 최근 기록·기억 요약을 손본 뒤 보내 주세요.${tail}`;
+  if (block === 'SAFETY' || finish === 'SAFETY' || block === 'IMAGE_SAFETY' || finish === 'IMAGE_SAFETY')
+    return `구글의 안전 필터가 ${where}을(를) 막았습니다. (사유: ${r})\n앱은 조절 가능한 필터를 모두 꺼서 보내고 있으니, 대개는 ‘다시 시도’로 풀립니다. 계속 막히면 같은 장면이 고정 정책에 닿은 것이니 아래를 확인해 주세요.\n\n${hints}${tail}`;
+  if (finish === 'RECITATION') return `모델이 기존 글(가사·책 등)과 너무 비슷하게 쓰려다 멈췄습니다. (사유: RECITATION)\n‘다시 시도’하면 대개 다른 표현으로 나옵니다.${tail}`;
+  if (finish === 'MAX_TOKENS') return '모델이 생각하는 데 출력 한도를 다 써서 답이 비었습니다. 설정에서 ‘생각 깊이’를 낮춘 뒤 다시 시도하세요.';
+  if (finish && finish !== 'STOP') return `답변이 중단되었습니다. (사유: ${finish})\n‘다시 시도’해 보세요.${tail}`;
+  return '모델이 아무 말도 쓰지 않고 끝냈습니다. 막힌 표시는 없어서, 대개 ‘다시 시도’로 풀립니다. 자꾸 반복되면 설정에서 ‘생각 깊이’를 낮추거나 모델을 바꿔 보세요.';
+}
+// 모델이 롤플레이 대신 '거절/안내문'을 쓴 것 같은지 (필터가 아니라 모델 자신의 판단)
+const looksRefusal = t => t.length < 400 && /(I can(?:'|no)t|I'm (?:not able|unable)|I won't|cannot (?:help|continue|fulfill|create)|as an AI|도와드릴 수 없|도와 드릴 수 없|작성할 수 없|진행할 수 없|진행하기 어렵|제공할 수 없|응할 수 없|요청(?:을|은|하신)[^.\n]{0,20}(?:어렵|수 없)|정책(?:에|상)[^.\n]{0,20}(?:위반|어긋|맞지))/i.test(t);
 // 내 키로 쓸 수 있는 모델 이름 전체 (여러 쪽으로 나뉘어 와도 모두 모은다)
 async function listModels() {
   const out = []; let token = '';
@@ -1785,7 +1817,11 @@ JSON 배열만 출력한다: [{"style":"...","text":"..."}, ...]`;
 }
 const VTAG_NAMES = 'argh|breath|heavy breath|exhales|pant|moan|growl|grunt|grr|hiss|pff|phew|cackle|cheer|chuckles?|laugh|laughter|giggle|snicker|cry|sob|whimper|cough|gasp|groan|scream|shout|shriek|sighs?|sneeze|snort|throat-clearing|tsk|yawn|whispers|whispering|short pause|long pause';
 const VTAG = new RegExp(`<(?:${VTAG_NAMES})>`, 'gi'), VTAG1 = new RegExp(`^<(?:${VTAG_NAMES})>$`, 'i');
-const hideVtags = t => String(t).replace(new RegExp(`[ \\t]*<(?:${VTAG_NAMES})>[ \\t]*`, 'gi'), ' ').replace(/ {2,}/g, ' ').replace(/^ +| +$/gm, '');
+// 소리 태그만 지우고, 그 자리에 생긴 빈칸만 정리한다 (줄 앞 들여쓰기·코드 블록은 그대로)
+const hideVtags = t => String(t).replace(new RegExp(`([ \\t]*)(?:<(?:${VTAG_NAMES})>[ \\t]*)+`, 'gi'), (all, lead, off, str) => {
+  const atStart = off === 0 || str[off - 1] === '\n', end = off + all.length, atEnd = end >= str.length || str[end] === '\n';
+  return atStart ? lead : atEnd ? '' : ' ';
+});
 const TTS_LITE = 'gemini-3.8-flash-lite-tts';
 function nextPacificMidnight(now = Date.now()) {
   const p = Object.fromEntries(new Intl.DateTimeFormat('en-US', { timeZone: 'America/Los_Angeles', hourCycle: 'h23', hour: 'numeric', minute: 'numeric', second: 'numeric' }).formatToParts(new Date(now)).map(x => [x.type, Number(x.value)]));
@@ -2289,7 +2325,7 @@ function notice(msg, retry) {
   const row = h('div', { class: 'rowx' });
   if (retry) row.append(h('button', { onclick: () => { n.remove(); retry(); } }, '다시 시도'));
   if (/키가 아직 없습니다/.test(msg)) row.append(h('button', { onclick: openSettings }, '설정 열기'));
-  else if (/키|모델|서버|통신|연결|권한|결제/.test(msg)) row.append(h('button', { onclick: () => { openSettings(); runDiag(); } }, '연결 확인'));
+  else if (!/고정 정책|안전 필터|거절|아무 말도|RECITATION|중단되었습니다/.test(msg) && /키|모델|서버|통신|연결|권한|결제/.test(msg)) row.append(h('button', { onclick: () => { openSettings(); runDiag(); } }, '연결 확인'));
   row.append(h('button', { class: 'quiet', onclick: () => n.remove() }, '닫기'));
   n.append(row); $('#log').append(n); toBottom();
 }
@@ -2342,7 +2378,7 @@ async function generateReply(extraNote) {
   const typing = h('div', { class: 'typing', 'aria-label': '입력 중' }, h('i'), h('i'), h('i'));
   log.append(group, typing); toBottom(); HOOK.replyStart?.(); let lineNo = 0;
 
-  const queue = [], revealed = []; let streamDone = false, acc = '', pos = 0, usage = null, finish = null, block = null, err = null;
+  const queue = [], revealed = []; let streamDone = false, acc = '', pos = 0, usage = null, finish = null, block = null, blockMsg = '', err = null;
   const alive = () => S.ui.roomId === roomId && !S.abort.signal.aborted;
   const pushLine = raw => {
     const p = parseLine(raw, tags, char.name); if (!p) return;
@@ -2377,9 +2413,9 @@ async function generateReply(extraNote) {
   try {
     const res = await callGemini({ model: S.settings.model, system: sysText, contents: buildContents(char, room, extraNote), stream: true, signal: S.abort.signal, onWait: sec => Stage.status(`요청이 몰려 ${sec}초 뒤 다시 시도합니다…`) });
     for await (const chunk of sse(res)) {
-      if (chunk.promptFeedback?.blockReason) block = chunk.promptFeedback.blockReason;
+      if (chunk.promptFeedback?.blockReason) { block = chunk.promptFeedback.blockReason; blockMsg = chunk.promptFeedback.blockReasonMessage || ''; }
       const c = chunk.candidates?.[0];
-      if (c) { for (const p of c.content?.parts || []) if (p.text && !p.thought) acc += p.text; if (c.finishReason) finish = c.finishReason; }
+      if (c) { for (const p of c.content?.parts || []) if (p.text && !p.thought) acc += p.text; if (c.finishReason) finish = c.finishReason; if (c.finishMessage) blockMsg = c.finishMessage; }
       if (chunk.usageMetadata) usage = chunk.usageMetadata;
       if (story) { // 스토리챗: 한 덩어리로 받아 쓰는 대로 보여 준다
         const sp = splitStory(acc, tags, true);
@@ -2423,10 +2459,9 @@ async function generateReply(extraNote) {
   const retry = () => generateReply(extraNote);
   if (err) notice(err.message, retry);
   else if (!revealed.length) {
-    if (block) notice(`구글의 안전 장치가 이 요청을 막았습니다. (사유: ${block})\n직전 메시지를 고치거나 지운 뒤 다시 시도하세요.`, retry);
-    else if (finish === 'MAX_TOKENS') notice('모델이 생각하는 데 출력 한도를 다 써서 답이 비었습니다. 설정에서 ‘생각 깊이’를 낮춘 뒤 다시 시도하세요.', retry);
-    else if (finish && finish !== 'STOP') notice(`답변이 중단되었습니다. (사유: ${finish})`, retry);
-    else if (finish) notice('빈 답변이 돌아왔습니다.', retry);
+    notice(blockHelp(block, finish, blockMsg), retry);
+  } else if (saved && looksRefusal(saved.text)) {
+    notice('캐릭터 대신 모델이 거절·안내하는 말을 쓴 것 같습니다. 이건 구글 필터가 아니라 모델 스스로의 판단이라, 대개 ‘다시 생성’으로 풀립니다.\n반복되면 최근 대화·기억 요약에 모델이 망설일 만한 내용(어려 보이는 인물 묘사, 실존 인물 등)이 있는지 확인해 주세요.', () => regenerate(saved));
   }
   if (saved) { scheduleNudge(); maybeSummarize(); }
 }
@@ -3140,7 +3175,7 @@ async function diagSteps() {
       s.set('ok', `답: “${text.trim().slice(0, 40)}”\n첫 글자까지 ${sec(first)}, 전체 ${sec(performance.now())}` +
         (usage ? ` · 입력 ${num(usage.promptTokenCount)} · 출력 ${num((usage.candidatesTokenCount || 0) + (usage.thoughtsTokenCount || 0))} 토큰` : '') +
         (noThink.has(want) ? '\n이 모델은 생각 깊이 설정을 받지 않아 설정 없이 보냈습니다.' : ''));
-    } else if (block) s.set('fail', `구글의 안전 장치가 시험 요청을 막았습니다. (사유: ${block})`);
+    } else if (block || (finish && !/STOP|MAX_TOKENS/.test(finish))) s.set('fail', blockHelp(block, finish));
     else if (finish === 'MAX_TOKENS') s.set('fail', '모델이 생각하는 데 출력 한도를 다 써서 답이 비었습니다. 아래 ‘생각 깊이’를 낮춘 뒤 다시 확인하세요.');
     else s.set('fail', `연결은 됐지만 빈 답이 돌아왔습니다. (종료 사유: ${finish || '없음'})`);
   } catch (e) { s.set('fail', e.message, e.kind === 'model' || e.kind === 'key' || e.kind === 'request' ? swapRow() : null); }
@@ -3774,7 +3809,7 @@ $('#btnWidgetNew').onclick = async () => {
 };
 
 /* ───────── 업데이트 확인 (GitHub Releases) ───────── */
-const APP_VERSION = '1.10.2';
+const APP_VERSION = '1.10.3';
 const UPDATE_BASE = 'https://raw.githubusercontent.com/harp1455/Chat/main/release/';
 const RELEASES_PAGE = 'https://github.com/harp1455/Chat/releases';
 const verCmp = (a, b) => { const x = String(a).replace(/^v/, '').split('.').map(n => parseInt(n, 10) || 0), y = String(b).replace(/^v/, '').split('.').map(n => parseInt(n, 10) || 0); for (let i = 0; i < 3; i++) if ((x[i] || 0) !== (y[i] || 0)) return (x[i] || 0) - (y[i] || 0); return 0; };

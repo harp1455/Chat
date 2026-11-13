@@ -1479,10 +1479,10 @@ async function gToken() {
   }
   S.settings.gauth = { ...a, ...t }; saveSettings(); return t.access;
 }
-async function vcall(url, { method = 'POST', body, signal, bearer = false } = {}) {
+async function vcall(url, { method = 'POST', body, signal, bearer = false, noUserProject = false } = {}) {
   const key = vertexKeyOf(); if (!key && !bearer) throw gErr('nokey', 'Vertex AI 키가 없습니다.');
   const headers = bearer ? { Authorization: 'Bearer ' + await gToken() } : url.includes('key=') ? {} : { 'x-goog-api-key': key };
-  if (bearer && vertexProject()) headers['x-goog-user-project'] = vertexProject();
+  if (bearer && vertexProject() && !noUserProject) headers['x-goog-user-project'] = vertexProject();
   if (body !== undefined) headers['Content-Type'] = 'application/json';
   let res;
   try { res = await fetch(url, { method, headers, body: body === undefined ? undefined : JSON.stringify(body), signal, cache: 'no-store' }); }
@@ -2856,11 +2856,20 @@ const vdBody = (where, c, desc, gender, base) => where === 'vertex'
   ? { store: true, voice: { type: 'VOICE_TYPE_PROMPTED', displayName: (c.name || '캐릭터').slice(0, 40), gender, languageCode: 'ko-KR', prompted: { input: desc, ...(base ? { baseVoice: base } : {}) } } }
   : { store: true, voice: { model: cleanModel(S.settings.ttsModel) || DEFAULTS.ttsModel, type: 'prompted', display_name: (c.name || '캐릭터').slice(0, 40), gender, language_code: 'ko-KR', prompted: { input: desc, ...(base ? { base_voice: base } : {}) } } };
 async function designVoice(where, c, desc, gender, base) {
-  const send = b => where === 'vertex'
-    ? vcall(gLogged() ? vertexVoicesUrlLogin() : vertexVoicesUrl(), { bearer: gLogged(), body: vdBody('vertex', c, desc, gender, b) })
-    : gfetch('voices', { method: 'POST', body: vdBody('studio', c, desc, gender, b) });
-  let res;
-  try { res = await send(base); } catch (e) { if (!base || !(e.kind === 'request' || e.code === 400)) throw e; res = await send(''); } // 기준 목소리를 못 받으면 없이 다시
+  // 구글이 요청 모양을 거절(400)하면 모양을 바꿔 가며 차례로 다시 보낸다: 기준 목소리 빼기 → 선택 항목 빼기 → 다른 표기
+  const full = vdBody(where, c, desc, gender, base), plain = vdBody(where, c, desc, gender, '');
+  const tries = where === 'vertex'
+    ? [{ body: full }, { body: full, noUserProject: true }, { body: { store: true, voice: { type: 'VOICE_TYPE_PROMPTED', prompted: { input: desc } } } },
+       { body: { store: true, voice: { type: 'VOICE_TYPE_PROMPTED', display_name: plain.voice.displayName, gender, language_code: 'ko-KR', prompted: { input: desc } } } },
+       { body: { store: true, voice: { type: 'prompted', prompted: { input: desc } } } }]
+    : [{ body: full }, ...(base ? [{ body: plain }] : []), { body: { store: true, voice: { model: plain.voice.model, type: 'prompted', prompted: { input: desc } } } },
+       { body: { store: true, voice: { model: DEFAULTS.ttsModel, type: 'prompted', display_name: plain.voice.display_name, gender, language_code: 'ko-KR', prompted: { input: desc } } } }];
+  let res, errs = [];
+  for (const t of tries) {
+    try { res = where === 'vertex' ? await vcall(gLogged() ? vertexVoicesUrlLogin() : vertexVoicesUrl(), { bearer: gLogged(), body: t.body, noUserProject: t.noUserProject }) : await gfetch('voices', { method: 'POST', body: t.body }); break; }
+    catch (e) { errs.push(e); if (!(e.code === 400 || e.kind === 'request')) break; }
+  }
+  if (!res) { const e = errs[errs.length - 1], first = errs[0]; e.message = `${where === 'vertex' ? 'Vertex' : 'AI Studio'} 쪽에서 거절했습니다. ${(first.raw || first.message).replace(/\n/g, ' / ')}` + (errs.length > 1 ? ` (모양을 바꿔 ${errs.length}번 시도, 마지막: ${(e.raw || e.message).split('\n').pop().slice(0, 200)})` : ''); throw e; }
   const j = await res.json(), id = String(j.id || j.voice?.id || j.name || '').replace(/^.*voices\//, '');
   if (!id) throw new Error('목소리 ID를 받지 못했습니다.');
   const sample = j.sample_audio?.data || j.sampleAudio?.data || j.voice?.sample_audio?.data || j.voice?.sampleAudio?.data || '';
@@ -2899,18 +2908,18 @@ $('#btnVoiceDesign').onclick = async () => {
   if (where !== 'studio' && gLogged() && !vertexProject()) { msg.textContent = '설정 → 목소리의 ‘구글 클라우드 프로젝트 ID’ 칸을 채워 주세요.'; return; }
   const b = $('#btnVoiceDesign'); b.disabled = true;
   try {
-    let vx = null, st = null, base = '';
-    if (where !== 'studio') { msg.textContent = 'Vertex에 목소리를 만드는 중…'; vx = await designVoice('vertex', c, desc, gender, ''); base = vx.base; }
-    if (where !== 'vertex') { msg.textContent = where === 'both' ? '같은 설명으로 AI Studio에도 만드는 중…' : '새 목소리를 만드는 중…'; st = await designVoice('studio', c, desc, gender, base); }
+    let vx = null, st = null, base = '', half = '';
+    if (where !== 'studio') { msg.textContent = 'Vertex에 목소리를 만드는 중…'; try { vx = await designVoice('vertex', c, desc, gender, ''); base = vx.base; } catch (e) { if (where !== 'both') throw e; half = e.message; } }
+    if (where !== 'vertex') { msg.textContent = where === 'both' ? '같은 설명으로 AI Studio에도 만드는 중…' : '새 목소리를 만드는 중…'; try { st = await designVoice('studio', c, desc, gender, base); } catch (e) { if (!vx) { if (half) e.message = half + ' / ' + e.message; throw e; } half = e.message; } }
     c.voice = (vx || st).id; c.voiceOn = true; c.voiceDesign = { desc, gender, base: base || st?.base || '' };
     if (vx && st) S.settings.voiceTwins = { ...(S.settings.voiceTwins || {}), [vx.id]: st.id };
     saveSettings(); saveChar();
     $('#dlgChar [data-char="voice"]').value = c.voice; $('#dlgChar [data-char="voiceOn"]').checked = true;
-    msg.textContent = vx && st ? '두 곳에 목소리를 만들어 짝지었습니다. 평소에는 Vertex 쪽으로 한도 없이 읽습니다. 아래에서 둘을 비교해 들어 보세요.' : vx ? '새 목소리를 Vertex AI에 만들어 등록했습니다. 이 목소리는 Vertex로만 읽습니다.' : '새 목소리를 등록했습니다.';
+    msg.textContent = half ? `${vx ? 'Vertex' : 'AI Studio'}에만 만들어 등록했습니다. 다른 쪽은 실패했습니다: ${half}` : vx && st ? '두 곳에 목소리를 만들어 짝지었습니다. 평소에는 Vertex 쪽으로 한도 없이 읽습니다. 아래에서 둘을 비교해 들어 보세요.' : vx ? '새 목소리를 Vertex AI에 만들어 등록했습니다. 이 목소리는 Vertex로만 읽습니다.' : '새 목소리를 등록했습니다.';
     renderPair(c);
     const sample = (vx || st).sample; if (sample) await Voice.play(Voice.toUrl(sample));
-  } catch (e) { msg.textContent = '목소리를 만들지 못했습니다. ' + e.message.split('\n')[0]; renderPair(c); }
-  b.disabled = false;
+  } catch (e) { msg.textContent = '목소리를 만들지 못했습니다. ' + e.message.replace(/\n/g, ' / '); renderPair(c); }
+  msg.style.userSelect = 'text'; b.disabled = false;
 };
 $('#btnCharDelete').onclick = deleteChar;
 $('#btnChar').onclick = () => openEditor(); $('#btnKey2').onclick = () => openSettings();
@@ -3687,7 +3696,7 @@ $('#btnWidgetNew').onclick = async () => {
 };
 
 /* ───────── 업데이트 확인 (GitHub Releases) ───────── */
-const APP_VERSION = '1.9.1';
+const APP_VERSION = '1.9.2';
 const UPDATE_BASE = 'https://raw.githubusercontent.com/harp1455/Chat/main/release/';
 const RELEASES_PAGE = 'https://github.com/harp1455/Chat/releases';
 const verCmp = (a, b) => { const x = String(a).replace(/^v/, '').split('.').map(n => parseInt(n, 10) || 0), y = String(b).replace(/^v/, '').split('.').map(n => parseInt(n, 10) || 0); for (let i = 0; i < 3; i++) if ((x[i] || 0) !== (y[i] || 0)) return (x[i] || 0) - (y[i] || 0); return 0; };

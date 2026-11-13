@@ -7,6 +7,8 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.PowerManager;
 import android.provider.Settings;
+import android.app.PendingIntent;
+import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -32,6 +34,34 @@ import com.getcapacitor.annotation.PermissionCallback;
 public class NativeSettingsPlugin extends Plugin {
     // 알림을 눌러 앱이 열렸을 때 열어야 할 방 (MainActivity가 채워 두고 웹 화면이 가져간다)
     static volatile String openRoom = null;
+
+    // 앱이 살아 있는 동안(뒤에 있을 때) 캐릭터가 보낸 메시지를 카톡처럼 알림으로 띄운다
+    @PluginMethod
+    public void notifyMessage(PluginCall call) {
+        try {
+            Context ctx = getContext();
+            String title = call.getString("title", ""), body = call.getString("body", ""), roomId = call.getString("roomId", "");
+            Intent open = new Intent(ctx, MainActivity.class);
+            open.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            open.putExtra("actionTypeId", "room:" + roomId);
+            int id = (int) (System.currentTimeMillis() % 2000000000L);
+            PendingIntent pi = PendingIntent.getActivity(ctx, id, open, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+            int icon = ctx.getResources().getIdentifier("ic_stat_chat", "drawable", ctx.getPackageName());
+            NotificationCompat.Builder b = new NotificationCompat.Builder(ctx, "chat_msg")
+                .setSmallIcon(icon != 0 ? icon : ctx.getApplicationInfo().icon)
+                .setContentTitle(title).setContentText(body)
+                .setStyle(new NotificationCompat.BigTextStyle().bigText(body))
+                .setPriority(NotificationCompat.PRIORITY_HIGH).setCategory(NotificationCompat.CATEGORY_MESSAGE)
+                .setDefaults(NotificationCompat.DEFAULT_ALL).setAutoCancel(true).setContentIntent(pi);
+            NotificationManagerCompat nm = NotificationManagerCompat.from(ctx);
+            JSObject r = new JSObject();
+            if (!nm.areNotificationsEnabled()) { r.put("shown", false); call.resolve(r); return; }
+            nm.notify(id, b.build());
+            r.put("shown", true);
+            call.resolve(r);
+        } catch (SecurityException e) { JSObject r = new JSObject(); r.put("shown", false); call.resolve(r); }
+        catch (Exception e) { call.reject("알림을 띄우지 못했습니다: " + e.getMessage()); }
+    }
 
     /* ───── 구글 로그인: 휴대폰 기본 브라우저에서 로그인하고, 결과는 이 휴대폰 안(127.0.0.1)의 임시 주소로 받는다 ─────
        구글은 앱 안 화면(WebView)에서의 로그인을 막기 때문에 바깥 브라우저를 써야 한다. */

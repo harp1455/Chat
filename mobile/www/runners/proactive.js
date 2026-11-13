@@ -39,23 +39,28 @@ function plainBody(text) {
 }
 
 addEventListener('setCfg', function (resolve, reject, args) {
-  try { save('cfg', args.cfg || null); resolve(); } catch (e) { reject(e); }
+  try { var c = args.cfg || null; if (c && c.active) c.activeAt = Date.now(); save('cfg', c); resolve(); } catch (e) { reject(e); }
 });
 addEventListener('setActive', function (resolve, reject, args) {
-  try { var cfg = load('cfg', null); if (cfg) { cfg.active = !!args.active; save('cfg', cfg); } resolve(); } catch (e) { reject(e); }
+  try { var cfg = load('cfg', null); if (cfg) { cfg.active = !!args.active; if (cfg.active) cfg.activeAt = Date.now(); save('cfg', cfg); } resolve(); } catch (e) { reject(e); }
 });
 addEventListener('drain', function (resolve, reject) {
   try {
     var inbox = load('inbox', []), cfg = load('cfg', null);
     save('inbox', []);
-    resolve({ inbox: inbox, packs: (cfg && cfg.packs || []).map(function (p) { return { charId: p.charId, next: p.next }; }) });
+    resolve({ stat: load('stat', null), inbox: inbox, packs: (cfg && cfg.packs || []).map(function (p) { return { charId: p.charId, next: p.next }; }) });
   } catch (e) { reject(e); }
 });
 
 addEventListener('checkIn', async function (resolve, reject) {
   try {
     var cfg = load('cfg', null), now = Date.now();
-    if (!cfg || !cfg.on || cfg.active || !cfg.key || !cfg.packs || !cfg.packs.length || inQuiet(now, cfg)) { resolve(); return; }
+    var st = load('stat', null) || { runs: 0 }; st.runs = (st.runs || 0) + 1; st.at = now;
+    // 앱이 화면에 떠 있는 동안에는 앱이 직접 보낸다. 앱이 갑자기 꺼져 '켜짐' 표시가 남은 경우를 대비해 7분이 지나면 꺼진 것으로 본다
+    var live = cfg && cfg.active && now - (cfg.activeAt || 0) < 7 * 60e3;
+    var why = !cfg ? '설정 없음(앱을 한 번 열었다 닫아 주세요)' : !cfg.on ? '선톡 꺼짐' : live ? '앱 사용 중' : !cfg.key ? 'API 키 없음' : !cfg.packs || !cfg.packs.length ? '선톡을 켠 캐릭터 없음' : inQuiet(now, cfg) ? '조용한 시간' : '';
+    if (why) { st.note = why; save('stat', st); resolve(); return; }
+    st.note = '보낼 시간이 아직 아님';
     var inbox = load('inbox', []);
     for (var i = 0; i < cfg.packs.length; i++) {
       var p = cfg.packs[i];
@@ -72,7 +77,7 @@ addEventListener('checkIn', async function (resolve, reject) {
         headers: { 'Content-Type': 'application/json', 'x-goog-api-key': cfg.key },
         body: JSON.stringify({ systemInstruction: { parts: [{ text: p.system }] }, contents: contents, generationConfig: p.gen || {} }),
       });
-      if (!res.ok) { p.next = now + 30 * 60e3; continue; }
+      if (!res.ok) { p.next = now + 30 * 60e3; st.note = '구글 요청 실패 (' + res.status + ')'; continue; }
       var j = await res.json();
       var parts = (j && j.candidates && j.candidates[0] && j.candidates[0].content && j.candidates[0].content.parts) || [];
       var text = parts.filter(function (x) { return x.text && !x.thought; }).map(function (x) { return x.text; }).join('').trim();
@@ -86,9 +91,10 @@ addEventListener('checkIn', async function (resolve, reject) {
       p.contents.push({ role: 'model', parts: [{ text: text }] }, { role: 'user', parts: [{ text: '(시스템: 상대에게서 아직 새 메시지가 없다.)\n(시스템: {{NOTE}})' }] });
       p.streak = (p.streak || 0) + 1; p.lastTs = Date.now();
       CapacitorNotifications.schedule([{ id: Math.floor(Math.random() * 2000000000), title: p.name, body: plainBody(text), smallIcon: 'ic_stat_chat', autoCancel: true, channelId: 'chat_msg', actionTypeId: 'room:' + p.roomId }]);
+      st.note = p.name + '의 선톡을 보내고 알림을 띄움'; st.sentAt = Date.now(); st.sent = (st.sent || 0) + 1;
       break; // 한 번 깨어날 때 하나만
     }
-    save('cfg', cfg); save('inbox', inbox);
+    save('cfg', cfg); save('inbox', inbox); save('stat', st);
     resolve();
-  } catch (e) { reject(e); }
+  } catch (e) { try { save('stat', { at: Date.now(), note: '오류: ' + (e && e.message || e) }); } catch (x) { } reject(e); }
 });

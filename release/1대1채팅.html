@@ -317,6 +317,7 @@ ol.diag{list-style:none;margin:12px 0 0;padding:0;display:flex;flex-direction:co
 .vprow{display:flex;gap:10px;align-items:center;padding:9px 12px;border:1px solid var(--line);border-radius:10px;background:#141822}
 .vprow .vi{flex:1;min-width:0}.vprow .vi b{display:block}.vprow .vi span{color:var(--dim);font-size:12.5px;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .vprow.on{border-color:var(--lemon)}
+.gauth{display:flex;flex-direction:column;gap:8px;border-top:1px solid var(--line);padding-top:10px;margin-top:4px}
 .vxbox{display:flex;flex-direction:column;gap:8px;margin-top:6px;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:#141822}
 .lockNote{background:rgba(255,226,120,.08);border:1px solid rgba(255,226,120,.25);border-radius:10px;padding:10px 12px;font-size:13.5px;color:#e9dca8}
 dialog.small{width:min(460px,96vw)}
@@ -801,6 +802,14 @@ dialog[open]::backdrop{animation:fadein .22s ease}
       <label class="f"><span><b>구글 클라우드 프로젝트 ID</b> (선택) 비워 두면 익스프레스 모드 방식으로 연결합니다. 연결 확인에서 ‘목소리 만들기’가 안 된다고 나올 때 적어 보세요.</span><input type="text" data-set="vertexProject" autocomplete="off" spellcheck="false" placeholder="예: my-project-123456"></label>
       <div class="rowx"><button class="main" id="btnVertexTest">Vertex 연결 확인</button><span class="hint" id="vertexMsg">키, 목소리 모델, 직접 만든 목소리, 목소리 만들기 기능을 차례로 시험합니다.</span></div>
       <ol class="diag" id="vxList" hidden></ol>
+      <div class="gauth">
+        <b>구글 로그인 (직접 만든 목소리를 한도 없이 쓰기)</b>
+        <p class="hint">Vertex에서 목소리를 만들려면 키가 아니라 구글 계정 로그인이 필요합니다. 한 번 로그인해 두면 캐릭터 설정의 ‘Vertex AI에 만들기’로 목소리를 만들고, 그 목소리를 Vertex로 하루 한도 없이 읽습니다. 로그인은 PC 앱에서 합니다.</p>
+        <div class="rowx"><button id="btnOauthFile">OAuth 클라이언트 파일 불러오기</button><span class="hint" id="oauthFileMsg"></span><input type="file" id="oauthFile" accept=".json,application/json" hidden></div>
+        <div class="rowx"><button class="main" id="btnGLogin">구글 로그인</button><button id="btnGLogout" class="quiet" hidden>로그아웃</button><span class="hint" id="gauthMsg"></span></div>
+        <div class="rowx" id="gMoveRow" hidden><button id="btnGCopy" class="quiet">휴대폰에서도 쓰기: 로그인 코드 복사</button></div>
+        <div class="rowx" id="gPasteRow"><input type="text" id="gPaste" placeholder="PC에서 복사한 로그인 코드를 붙여 넣기" autocomplete="off" spellcheck="false" style="flex:1"><button id="btnGPaste">적용</button></div>
+      </div>
       <div class="rowx" id="vxCopyRow" hidden><button id="btnVxCopy">결과 복사</button><span class="hint">막히면 복사해서 그대로 붙여 넣어 알려 주세요. 키는 들어가지 않습니다.</span></div>
       <p class="hint">직접 만든 목소리는 만든 곳(AI Studio 또는 Vertex)에 저장됩니다. 앱이 목소리마다 Vertex에서 되는지 한 번 시험해 기억해 두고, 안 되는 목소리만 AI Studio로 읽습니다.</p>
     </div>
@@ -1444,14 +1453,34 @@ let vxNoProject = false; // 프로젝트 경로가 막히고 짧은 경로가 �
 const vertexModelUrl = (model, bare = vxNoProject) => 'https://aiplatform.googleapis.com/v1/' + (vertexProject() && !bare ? `projects/${encodeURIComponent(vertexProject())}/locations/global/` : '') + 'publishers/google/models/' + encodeURIComponent(model) + ':generateContent';
 // 목소리 만들기(Voices API) 주소는 키 방식에 따라 받는 모양이 달라서, 시험에서 통한 방식을 기억해 쓴다
 const vxVoiceWays = () => { const p = vertexProject(), w = []; if (p) w.push({ proj: true, q: false }, { proj: true, q: true }); w.push({ proj: false, q: false }, { proj: false, q: true }); return w; };
+const vertexVoicesUrlLogin = (tail = '') => 'https://aiplatform.googleapis.com/v1beta1/projects/' + encodeURIComponent(vertexProject()) + '/locations/global/voices' + tail;
 const vertexVoicesUrl = (tail = '', way = S.settings.vxVoiceWay || vxVoiceWays()[0]) => {
   let u = 'https://aiplatform.googleapis.com/v1beta1/' + (way.proj && vertexProject() ? `projects/${encodeURIComponent(vertexProject())}/locations/global/` : '') + 'voices' + tail;
   if (way.q) u += (u.includes('?') ? '&' : '?') + 'key=' + encodeURIComponent(vertexKeyOf());
   return u;
 };
-async function vcall(url, { method = 'POST', body, signal } = {}) {
-  const key = vertexKeyOf(); if (!key) throw gErr('nokey', 'Vertex AI 키가 없습니다.');
-  const headers = url.includes('key=') ? {} : { 'x-goog-api-key': key }; if (body !== undefined) headers['Content-Type'] = 'application/json';
+// ── 구글 로그인 토큰: PC 앱에서 로그인하고, 만료되면 저장해 둔 갱신 토큰으로 새로 받는다
+const gLogged = () => !!(S.settings.gauth?.refresh && S.settings.oauthClient?.id);
+async function gToken() {
+  const a = S.settings.gauth, c = S.settings.oauthClient; if (!a?.refresh || !c?.id) throw gErr('nologin', '구글 로그인이 되어 있지 않습니다.');
+  if (a.access && a.exp > Date.now() + 60e3) return a.access;
+  const form = { refresh_token: a.refresh, client_id: c.id, client_secret: c.secret || '', grant_type: 'refresh_token' };
+  let t;
+  if (DESK?.googleRefresh) t = await DESK.googleRefresh({ refresh: a.refresh, clientId: c.id, clientSecret: c.secret || '' });
+  else {
+    const http = CAPN && capPlugin('CapacitorHttp'); let j, ok;
+    if (http) { const r = await http.request({ url: 'https://oauth2.googleapis.com/token', method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, data: new URLSearchParams(form).toString() }); j = typeof r.data === 'string' ? JSON.parse(r.data) : r.data; ok = r.status < 300; }
+    else { const r = await fetch('https://oauth2.googleapis.com/token', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams(form) }); j = await r.json(); ok = r.ok; }
+    if (!ok) throw gErr('nologin', '구글 로그인이 만료되었습니다. PC 앱에서 다시 로그인해 주세요. (' + (j?.error_description || j?.error || '') + ')');
+    t = { access: j.access_token, exp: Date.now() + (Number(j.expires_in) || 3600) * 1000 };
+  }
+  S.settings.gauth = { ...a, ...t }; saveSettings(); return t.access;
+}
+async function vcall(url, { method = 'POST', body, signal, bearer = false } = {}) {
+  const key = vertexKeyOf(); if (!key && !bearer) throw gErr('nokey', 'Vertex AI 키가 없습니다.');
+  const headers = bearer ? { Authorization: 'Bearer ' + await gToken() } : url.includes('key=') ? {} : { 'x-goog-api-key': key };
+  if (bearer && vertexProject()) headers['x-goog-user-project'] = vertexProject();
+  if (body !== undefined) headers['Content-Type'] = 'application/json';
   let res;
   try { res = await fetch(url, { method, headers, body: body === undefined ? undefined : JSON.stringify(body), signal, cache: 'no-store' }); }
   catch (e) {
@@ -1463,9 +1492,12 @@ async function vcall(url, { method = 'POST', body, signal } = {}) {
   if (!res.ok) throw await apiError(res);
   return res;
 }
-async function vfetch(model, body, signal) {
+async function vfetch(model, body, signal, opt = {}) {
+  // 로그인으로 만든 목소리는 키로 안 되면 로그인 토큰으로 프로젝트 경로에 보낸다
+  if (opt.bearer) return vcall(vertexModelUrl(model, false), { body, signal, bearer: true });
   try { return await vcall(vertexModelUrl(model), { body, signal }); }
   catch (e) {
+    if (opt.login && gLogged() && vertexProject() && ['key', 'model', 'http', 'request'].includes(e.kind)) { const r = await vcall(vertexModelUrl(model, false), { body, signal, bearer: true }); Voice.bearerVoices.add(opt.login); return r; }
     if (!vertexProject() || vxNoProject || !['key', 'model', 'http', 'request'].includes(e.kind)) throw e;
     const r = await vcall(vertexModelUrl(model, true), { body, signal }).catch(() => null); // 키 방식에 따라 프로젝트 없는 경로만 받는 경우가 있다
     if (!r) throw e; vxNoProject = true; return r;
@@ -1759,12 +1791,13 @@ const Voice = {
       ? { contents: [{ role: 'user', parts: [{ text: st ? `다음 문장을 이런 말투로 읽어 줘: ${st}\n\n${say}` : say }] }], generationConfig: { responseModalities: ['AUDIO'], speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: voice } } } } }
       : { contents: [{ role: 'user', parts: [part] }], generationConfig: { responseModalities: ['AUDIO'], speechConfig: { voiceConfig: { voice } } } };
     // 3.8 이전 목소리 모델은 요청 모양이 달라서, 형식 오류가 나면 예전 모양으로 한 번 더 보낸다 (기본 목소리만)
-    const once = () => vfetch(model, body(Voice.legacyVx.has(model))).catch(e => { if (e.kind !== 'request' || Voice.legacyVx.has(model) || !Voice.isPrebuilt(voice)) throw e; Voice.legacyVx.add(model); return vfetch(model, body(true)); });
+    const custom = !Voice.isPrebuilt(voice), useBearer = custom && Voice.bearerVoices.has(voice) && gLogged();
+    const once = () => vfetch(model, body(Voice.legacyVx.has(model)), undefined, useBearer ? { bearer: true } : custom ? { login: voice } : {}).catch(e => { if (e.kind !== 'request' || Voice.legacyVx.has(model) || !Voice.isPrebuilt(voice)) throw e; Voice.legacyVx.add(model); return vfetch(model, body(true)); });
     const job = Voice.queue(() => withRetry(once, { tries: 4 })).then(res => res.json()).then(j => Voice.finish(j, key, say, onCost, model)).finally(() => Voice.pending.delete(key));
     Voice.pending.set(key, job);
     return job;
   },
-  legacyVx: new Set(),
+  legacyVx: new Set(), bearerVoices: new Set(),
   async synth(char, text, style, onCost) {
     const say = Voice.speakable(text); if (!say) return null;
     const st = [char.voiceStyle, style].map(x => (x || '').trim()).filter(Boolean).join(', ');
@@ -2605,7 +2638,7 @@ function openChar() {
   const c = curChar(); if (!c) return;
   if (isStory(c)) return openStory();
   moveBlocks(false); applyLockUi(c);
-  { const w = $('#vdWhere'); w.hidden = !vertexKeyOf() || S.settings.vertexDesign === false; if (!w.hidden && !w.dataset.touched) w.value = S.settings.voiceRoute === 'vertex' ? 'vertex' : 'studio'; w.onchange = () => { w.dataset.touched = '1'; }; }
+  { const w = $('#vdWhere'); w.hidden = !vertexKeyOf() || (S.settings.vertexDesign === false && !gLogged()); if (!w.hidden && !w.dataset.touched) w.value = S.settings.voiceRoute === 'vertex' ? 'vertex' : 'studio'; w.onchange = () => { w.dataset.touched = '1'; }; }
   fillCharFields(c);
   refreshCounts(); renderKb(); if (!c.proPerDay) $('[data-char="proPerDay"]').value = '3';
   $('#voiceMsg').textContent = '';
@@ -2815,8 +2848,10 @@ $('#btnVoiceDesign').onclick = async () => {
   msg.textContent = '새 목소리를 만드는 중…';
   const onVertex = !$('#vdWhere').hidden && $('#vdWhere').value === 'vertex';
   try {
+    if (onVertex && !S.settings.vxVoiceWay && !gLogged()) throw gErr('nologin', '설정 → 목소리에서 구글 로그인을 먼저 해 주세요.');
+    if (onVertex && gLogged() && !vertexProject()) throw gErr('nologin', '설정 → 목소리의 ‘구글 클라우드 프로젝트 ID’ 칸을 채워 주세요.');
     const res = onVertex
-      ? await vcall(vertexVoicesUrl(), { body: { store: true, voice: { type: 'VOICE_TYPE_PROMPTED', displayName: (c.name || '캐릭터').slice(0, 40), gender: $('#vdGender').value, languageCode: 'ko-KR', prompted: { input: desc } } } })
+      ? await vcall(gLogged() ? vertexVoicesUrlLogin() : vertexVoicesUrl(), { bearer: gLogged(), body: { store: true, voice: { type: 'VOICE_TYPE_PROMPTED', displayName: (c.name || '캐릭터').slice(0, 40), gender: $('#vdGender').value, languageCode: 'ko-KR', prompted: { input: desc } } } })
       : await gfetch('voices', { method: 'POST',
       body: { store: true, voice: { model: cleanModel(S.settings.ttsModel) || DEFAULTS.ttsModel, type: 'prompted', display_name: (c.name || '캐릭터').slice(0, 40), gender: $('#vdGender').value, language_code: 'ko-KR', prompted: { input: desc } } } });
     const j = await res.json(); const id = j.id || j.voice?.id || j.name;
@@ -2851,7 +2886,7 @@ $('#btnPromptReset').onclick = () => {
 };
 function openSettings() {
   fillSetFields();
-  $('#proHint').textContent = proHintText(); $('#proMsg').textContent = ''; renderPerm();
+  $('#proHint').textContent = proHintText(); $('#proMsg').textContent = ''; renderPerm(); renderGauth();
   $('#ttsLimitInfo').textContent = Voice.blocked() ? `오늘 목소리 한도를 다 썼습니다. ${fmtClock(S.settings.ttsBlockedUntil)}에 다시 읽을 수 있습니다.` : (S.settings.ttsLiteUntil || 0) > Date.now() ? `오늘 한도가 차서 가벼운 모델로 읽는 중입니다. ${fmtClock(S.settings.ttsLiteUntil)}에 원래 모델로 돌아갑니다.` : '';
   $('#verInfo').textContent = `지금 버전: v${APP_VERSION} (${platformName()}). 시작할 때와 6시간마다 새 버전이 있는지 자동으로 확인합니다.`; $('#updMsg').textContent = '';
   $('#autostartRow').hidden = !DESK;
@@ -3052,6 +3087,44 @@ $('#vpGo').onclick = () => loadVoices(false); $('#vpMore').onclick = () => loadV
 $('#vpSearch').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); loadVoices(false); } });
 for (const id of ['vpLang', 'vpGender', 'vpPitch']) $('#' + id).addEventListener('change', () => loadVoices(false));
 $('#btnVoicePick').onclick = () => { const f = $('#dlgChar [data-char="voice"]'); openVoicePick({ get: () => f.value, set: id => { f.value = id; f.dispatchEvent(new Event('input', { bubbles: true })); const on = $('#dlgChar [data-char="voiceOn"]'); if (!on.checked) { on.checked = true; on.dispatchEvent(new Event('change', { bubbles: true })); } } }); };
+function renderGauth() {
+  const c = S.settings.oauthClient, a = S.settings.gauth;
+  $('#oauthFileMsg').textContent = c?.id ? `불러옴 (${c.id.slice(0, 12)}…)` : 'PC에서 처음 한 번만 필요합니다.';
+  $('#btnGLogin').hidden = !DESK; $('#btnGLogout').hidden = !gLogged(); $('#gMoveRow').hidden = !(gLogged() && DESK); $('#gPasteRow').hidden = !!DESK || gLogged();
+  $('#btnOauthFile').hidden = !DESK && !c?.id;
+  $('#gauthMsg').textContent = gLogged() ? `로그인됨: ${a.email || '구글 계정'}` : DESK ? (c?.id ? '로그인하면 기본 브라우저에서 구글 로그인 창이 열립니다.' : '먼저 OAuth 클라이언트 파일을 불러오세요.') : '휴대폰에서는 PC 앱에서 복사한 로그인 코드를 붙여 넣으세요.';
+}
+$('#btnOauthFile').onclick = () => $('#oauthFile').click();
+$('#oauthFile').addEventListener('change', async e => {
+  const f = e.target.files[0]; e.target.value = ''; if (!f) return;
+  try { const j = JSON.parse(await f.text()), o = j.installed || j.web || j; if (!/\.apps\.googleusercontent\.com$/.test(o.client_id || '')) throw new Error('OAuth 클라이언트 파일이 아닙니다.');
+    if (!j.installed) toast('이 파일은 ‘데스크톱 앱’ 유형이 아닙니다. 로그인이 안 되면 클라이언트 유형을 ‘데스크톱 앱’으로 다시 만들어 주세요.', 7000);
+    S.settings.oauthClient = { id: o.client_id, secret: o.client_secret || '' }; saveSettings(); renderGauth(); toast('불러왔습니다. 이제 ‘구글 로그인’을 누르세요.'); }
+  catch (er) { toast('불러오지 못했습니다. ' + er.message, 5000); }
+});
+$('#btnGLogin').onclick = async () => {
+  const c = S.settings.oauthClient; if (!c?.id) { toast('먼저 OAuth 클라이언트 파일을 불러오세요.'); return; }
+  const b = $('#btnGLogin'); b.disabled = true; $('#gauthMsg').textContent = '브라우저에서 로그인을 마쳐 주세요… (‘확인되지 않은 앱’ 경고가 나오면 고급 → 이동을 누르면 됩니다)';
+  try { const t = await DESK.googleLogin({ clientId: c.id, clientSecret: c.secret });
+    if (!t.refresh) throw new Error('갱신 토큰을 받지 못했습니다. 다시 한 번 로그인해 주세요.');
+    S.settings.gauth = t; saveSettings(); Voice.bearerVoices.clear(); toast('구글에 로그인했습니다. ‘Vertex 연결 확인’을 누르면 목소리 만들기를 확인합니다.', 6000); }
+  catch (e) { toast('로그인하지 못했습니다. ' + String(e.message || e).replace(/^Error invoking remote method '[^']+': (Error: )?/, ''), 8000); }
+  b.disabled = false; renderGauth();
+};
+$('#btnGLogout').onclick = () => { S.settings.gauth = null; saveSettings(); Voice.bearerVoices.clear(); renderGauth(); toast('로그아웃했습니다.'); };
+$('#btnGCopy').onclick = async () => {
+  const c = S.settings.oauthClient, a = S.settings.gauth;
+  const code = '1on1-login:' + btoa(unescape(encodeURIComponent(JSON.stringify({ c: c.id, s: c.secret, r: a.refresh, e: a.email || '', p: vertexProject() }))));
+  try { await navigator.clipboard.writeText(code); toast('로그인 코드를 복사했습니다. 휴대폰 앱의 설정 → 목소리에 붙여 넣으세요. 이 코드는 구글 계정 접근 권한이 들어 있으니 다른 사람에게 보내지 마세요.', 9000); }
+  catch { const box = $('#diagCopyBox'); box.value = code; box.hidden = false; toast('자동 복사가 막혀 있습니다. 아래 칸의 글을 복사하세요.'); }
+};
+$('#btnGPaste').onclick = () => {
+  const v = $('#gPaste').value.trim();
+  try { if (!v.startsWith('1on1-login:')) throw 0; const o = JSON.parse(decodeURIComponent(escape(atob(v.slice(11)))));
+    S.settings.oauthClient = { id: o.c, secret: o.s }; S.settings.gauth = { refresh: o.r, email: o.e, access: '', exp: 0 }; if (o.p && !vertexProject()) { S.settings.vertexProject = o.p; const f = $('[data-set="vertexProject"]'); if (f) f.value = o.p; }
+    saveSettings(); $('#gPaste').value = ''; renderGauth(); toast('로그인 정보를 적용했습니다.'); }
+  catch { toast('로그인 코드가 올바르지 않습니다. PC 앱에서 다시 복사해 주세요.', 5000); }
+};
 $('#btnVxCopy').onclick = async () => {
   const label = { ok: '정상', warn: '주의', fail: '실패', run: '진행 중' };
   const txt = [`[Vertex 연결 확인] ${fmtStamp(Date.now())}`, `프로젝트 ID: ${vertexProject() || '(비움)'} / 모델: ${Voice.vertexModel()} / 짧은 경로: ${vxNoProject}`, ...(Diag.vx || []).map(l => `[${label[l.state]}] ${l.title}: ${l.text.replace(/\n/g, ' / ')}`)].join('\n').replace(new RegExp(vertexKeyOf().replace(/[.*+?^${}()|[\]\\]/g, '\\$&') || '^$', 'g'), '(키)');
@@ -3100,8 +3173,13 @@ async function runVertexDiag(list) {
       s.set('ok', `쓸 수 있습니다. 이 프로젝트에 저장된 목소리 ${(j.voices || []).length}개. 캐릭터 설정의 ‘목소리 만들기’에서 ‘Vertex AI에 만들기’를 고르면 됩니다.`); break; }
     catch (e) { tried.push(`${way.proj ? '프로젝트 경로' : '짧은 경로'}·${way.q ? '주소에 키' : '헤더에 키'}: ${e.code || ''} ${(e.raw || first(e)).slice(0, 160)}`); }
   }
+  if (!designOk && gLogged() && vertexProject()) {
+    try { const j = await (await vcall(vertexVoicesUrlLogin('?type=prompted&type=replicated'), { method: 'GET', bearer: true })).json(); designOk = true; S.settings.vxVoiceWay = null;
+      s.set('ok', `구글 로그인으로 쓸 수 있습니다(${S.settings.gauth.email || '로그인됨'}). 이 프로젝트에 저장된 목소리 ${(j.voices || []).length}개. 캐릭터 설정의 ‘목소리 만들기’에서 ‘Vertex AI에 만들기’를 고르면 됩니다.`); }
+    catch (e) { tried.push(`구글 로그인: ${e.code || ''} ${(e.raw || first(e)).slice(0, 200)}`); }
+  }
   if (!designOk) { S.settings.vxVoiceWay = null;
-    s.set('warn', '이 키로는 Vertex의 목소리 만들기 기능을 쓸 수 없습니다. 가능한 연결 방식을 모두 시험했지만 구글이 거절했습니다. 콘솔에서 더 설정할 것은 없습니다(이 기능은 아직 미리보기 단계라 키 방식 연결을 막아 둔 것으로 보입니다).\n대신 캐릭터 설정의 ‘목소리 고르기’에서 구글이 준비한 목소리(2,000개 이상)를 고르면 Vertex로 하루 한도 없이 읽을 수 있습니다.\n— 시험 기록 —\n' + tried.join('\n')); }
+    s.set('warn', (gLogged() ? '구글 로그인으로도 목소리 만들기에 닿지 못했습니다. 아래 기록을 복사해 알려 주세요.' : '키로는 Vertex의 목소리 만들기 기능을 쓸 수 없습니다(구글이 키 방식 연결을 막아 둠). 아래 ‘구글 로그인’을 하면 쓸 수 있습니다.') + '\n— 시험 기록 —\n' + tried.join('\n')); }
   const fails = out.filter(l => l.state === 'fail').length, warns = out.filter(l => l.state === 'warn').length;
   step('결과').set(fails ? 'fail' : warns ? 'warn' : 'ok', fails ? '실패한 항목이 있습니다.' : warns ? 'Vertex로 목소리를 읽을 수 있습니다. 주의 항목은 위 안내를 확인하세요.' : '모두 정상입니다.');
   S.settings.vertexDesign = designOk; saveSettings();
@@ -3155,7 +3233,7 @@ $('#btnLockGo').onclick = async () => {
   b.disabled = false; b.textContent = '내보내기';
 };
 $('#btnBackup').onclick = async () => {
-  const { apiKey, vertexKey, ...settings } = S.settings;
+  const { apiKey, vertexKey, oauthClient, gauth, ...settings } = S.settings;
   const assets = $('#bkAssets').checked ? await DB.all('assets') : [];
   const parts = ['{"type":"oneonone-backup","v":1,"settings":', JSON.stringify(settings), ',"chars":', JSON.stringify(await DB.all('chars')),
     ',"rooms":', JSON.stringify(await DB.all('rooms')), ',"msgs":', JSON.stringify(await DB.all('msgs')), ',"assets":[', ...await assetParts(assets), ']}'];
@@ -3531,7 +3609,7 @@ $('#btnWidgetNew').onclick = async () => {
 };
 
 /* ───────── 업데이트 확인 (GitHub Releases) ───────── */
-const APP_VERSION = '1.7.0';
+const APP_VERSION = '1.8.0';
 const UPDATE_BASE = 'https://raw.githubusercontent.com/harp1455/Chat/main/release/';
 const RELEASES_PAGE = 'https://github.com/harp1455/Chat/releases';
 const verCmp = (a, b) => { const x = String(a).replace(/^v/, '').split('.').map(n => parseInt(n, 10) || 0), y = String(b).replace(/^v/, '').split('.').map(n => parseInt(n, 10) || 0); for (let i = 0; i < 3; i++) if ((x[i] || 0) !== (y[i] || 0)) return (x[i] || 0) - (y[i] || 0); return 0; };
